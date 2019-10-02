@@ -14,7 +14,7 @@ character = {
   "Int": 5, #Determines the potency of your spells
   "Agi": 5, #Determines the accuracy of your attacks, and how often you dodge attacks
   "Def": 5, #Determines how much damage you take from physical attacks
-	"Abilities": [],
+  "Abilities": [],
   "Inventory": [],
   "Gold": 50
 }
@@ -84,9 +84,9 @@ def intro():
     item_find(weap)
     lvlup()
   else:
-    dialogue(f"Welcome to The Realm of Asathryne, {character["Name"]}. A kingdom filled with adventure and danger, with much in store for those brave enough to explore it. Of course, nothing a {character["Class"]} such as yourself can't handle.")
+    dialogue(f"Welcome to The Realm of Asathryne, {character['Name']}. A kingdom filled with adventure and danger, with much in store for those brave enough to explore it. Of course, nothing a {character['Class']} such as yourself can't handle.")
     dialogue("Oh, of course! Allow me to introduce myself. My name is Kanron, your advisor.")
-    dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {character["Name"]} needs a {weap["Name"]}!")
+    dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {character['Name']} needs a {weap['Name']}!")
     item_find(weap)
     dialogue("Before you go venturing off into the depths of this realm, you must first master some basic skills.")
     Help()
@@ -218,7 +218,7 @@ def learn_ability(): #only used in lvlup, but might be used in other places late
     print("--- Choose an ability to learn/upgrade.")
     for a in ability_list:
       choice += 1
-      print(f"{choice}) {a["Name"]} ({a["Lvl"]}/{a["Max"]}): {a["Desc"]}")
+      print(f"{choice}) {a['Name']} ({a['Lvl']}/{a['Max']}): {a['Desc']}")
     x = num_input(" ")
     if x > choice or x == 0:
       cls()
@@ -230,9 +230,9 @@ def learn_ability(): #only used in lvlup, but might be used in other places late
         if x == choice:
           cls()
           if a["Lvl"] == 0:
-          	dialogue(f"--- You have learned {a["Name"]}.")
+          	dialogue(f"--- You have learned {a['Name']}.")
           else:
-            dialogue(f"--- You have upgraded {a["Name"]}.")
+            dialogue(f"--- You have upgraded {a['Name']}.")
           character["Abilities"].append(a)
           a["Lvl"] += 1
           character["AbiPts"] -= 1
@@ -242,15 +242,15 @@ def item_find(item): #whenever you find an item, it will give you the option to 
   while True:
     if item["Quest"]:
       character["Inventory"].append(item)
-      dialogue(f"--- You have recieved {item["Name"]}, and it has been added to your inventory.")
+      dialogue(f"--- You have recieved {item['Name']}, and it has been added to your inventory.")
       return
-    x = dialogue(f"--- You have recieved a(n) {item["Name"]}, worth {item["Value"]} gold! Do you take it, or leave it behind? (T/L) ").upper()
+    x = dialogue(f"--- You have recieved a(n) {item['Name']}, worth {item['Value']} gold! Do you take it, or leave it behind? (T/L) ").upper()
     if x == "T":
       character["Inventory"].append(item)
-      dialogue(f"--- {item["Name"]} has been added to your inventory.")
+      dialogue(f"--- {item['Name']} has been added to your inventory.")
       return
     if x == "L":
-      dialogue(f"--- You left the {item["Name"]} behind, and {int(0.7 * item["Value"])} gold has been added to your inventory.")
+      dialogue(f"--- You left the {item['Name']} behind, and {int(0.7 * item['Value'])} gold has been added to your inventory.")
       character["Gold"] += int(0.7 * item["Value"]) #if you leave behind an item, you will recieve 70% of its value in gold
       return
     else:
@@ -263,10 +263,10 @@ def lvlup(): #Whenever the player's xp reaches a certain point, they will level 
     character["HP"] += 50
     character["AP"] += 25
     character["AbiPts"] += 1
-    dialogue(f"--- You have leveled up to level {character["Lvl"]}! Your power increases.")
+    dialogue(f"--- You have leveled up to level {character['Lvl']}! Your power increases.")
     points = 3
     while True:
-      strength = num_input(f"--- Strength: {character["Str"]} ({points} points remaining) Add:")
+      strength = num_input(f"--- Strength: {character['Str']} ({points} points remaining) Add:")
       if strength > points:
         strength = points
       points -= strength
@@ -275,7 +275,7 @@ def lvlup(): #Whenever the player's xp reaches a certain point, they will level 
         cls()
         break
       cls()
-      intelligence = num_input(f"--- Intelligence: {character["Int"]} ({points} points remaining) Add:")
+      intelligence = num_input(f"--- Intelligence: {character['Int']} ({points} points remaining) Add:")
       if intelligence > points:
         intelligence = points
       points -= intelligence
@@ -284,7 +284,7 @@ def lvlup(): #Whenever the player's xp reaches a certain point, they will level 
         cls()
         break
       cls()
-      agility = num_input(f"--- Agility: {character["Agi"]} ({points} points remaining) Add:")
+      agility = num_input(f"--- Agility: {character['Agi']} ({points} points remaining) Add:")
       if agility > points:
         agility = points
       points -= agility
@@ -293,7 +293,7 @@ def lvlup(): #Whenever the player's xp reaches a certain point, they will level 
         cls()
         break
       cls()
-      defense = num_input(f"--- Defense: {character["Def"]} ({points} points remaining) Add:")
+      defense = num_input(f"--- Defense: {character['Def']} ({points} points remaining) Add:")
       if defense > points:
         defense = points
       points -= defense
@@ -330,7 +330,7 @@ def Help():
 def item_remove(item):
   for i in character["Inventory"]:
     if i == item:
-      dialogue(f"--- {item["Name"]} has been removed from your inventory.")
+      dialogue(f"--- {item['Name']} has been removed from your inventory.")
       character["Inventory"].remove(item)
 
 def view_char():
@@ -407,7 +407,7 @@ def Sanctuary_Kings_Palace():
         return
       else:
         print("Type 'Y' or 'N'")
-  dialogue(f"King Brand: At last, a brave {character["Class"]} has arisen once more in this kingdom, here on a quest to save the kingdom of Asathryne from the dark evil that lies beyond the gates.")
+  dialogue(f"King Brand: At last, a brave {character['Class']} has arisen once more in this kingdom, here on a quest to save the kingdom of Asathryne from the dark evil that lies beyond the gates.")
   dialogue("Tell me young traveller, what do you seek from me?")
   while True:
     option_1 = dialogue("""1) The gate keeper has sent me to meet you
@@ -450,7 +450,7 @@ def Sanctuary_Apothecary():
   dialogue("--- You travel to the apothecary.")
   dialogue("Welcome to the Apothecary! We have a variety of potions for sale. Take a look at what we have in stock.")
   while True:
-    print(f"--- You have {character["Gold"]} gold.")
+    print(f"--- You have {character['Gold']} gold.")
     dialogue("Sorry, there's nothing for sale today. Come back later!")
     return
 
@@ -458,7 +458,7 @@ def Sanctuary_Blacksmith():
   dialogue("--- You travel to the blacksmith.")
   dialogue("Hello there, traveller! You look like you could use some armor, and a reliable weapon, too. Step into my blacksmith shop and take a look at my many wares!")
   while True:
-    print(f"--- You have {character["Gold"]} gold.")
+    print(f"--- You have {character['Gold']} gold.")
     dialogue("Sorry, there's nothing for sale today. Come back later!")
     return
 
