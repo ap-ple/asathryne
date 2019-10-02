@@ -20,7 +20,7 @@ character = {
 }
 
 def intro():
-  system('cls')
+  cls()
   print(">>> Asathryne <<<")
   dialogue("Press enter to start.")
   
@@ -39,7 +39,7 @@ def intro():
 3) Ranger
 4) Paladin""")
     Class = dialogue()
-    system('cls')
+    cls()
     if Class == "1":
       dialogue("""--- You chose the warrior class, which favors Strength.
     - Courage, above all else, is the first quality of a warrior!
@@ -221,14 +221,14 @@ def learn_ability(): #only used in lvlup, but might be used in other places late
       print(f"{choice}) {a["Name"]} ({a["Lvl"]}/{a["Max"]}): {a["Desc"]}")
     x = num_input(" ")
     if x > choice or x == 0:
-      system('cls')
+      cls()
       print("--- Type the corresponding number to learn an ability.")
     else:	
       choice = 0
       for a in ability_list:
         choice += 1
         if x == choice:
-          system('cls')
+          cls()
           if a["Lvl"] == 0:
           	dialogue(f"--- You have learned {a["Name"]}.")
           else:
@@ -272,36 +272,36 @@ def lvlup(): #Whenever the player's xp reaches a certain point, they will level 
       points -= strength
       character["Str"] += strength
       if points == 0:
-        system('cls')
+        cls()
         break
-      system('cls')
+      cls()
       intelligence = num_input(f"--- Intelligence: {character["Int"]} ({points} points remaining) Add:")
       if intelligence > points:
         intelligence = points
       points -= intelligence
       character["Int"] += intelligence
       if points == 0:
-        system('cls')
+        cls()
         break
-      system('cls')
+      cls()
       agility = num_input(f"--- Agility: {character["Agi"]} ({points} points remaining) Add:")
       if agility > points:
         agility = points
       points -= agility
       character["Agi"] += agility
       if points == 0:
-        system('cls')
+        cls()
         break
-      system('cls')
+      cls()
       defense = num_input(f"--- Defense: {character["Def"]} ({points} points remaining) Add:")
       if defense > points:
         defense = points
       points -= defense
       character["Def"] += defense
       if points == 0:
-        system('cls') 
+        cls() 
         break
-      system('cls')
+      cls()
     while character["AbiPts"] != 0:
       if learn_ability():
         break
@@ -341,7 +341,7 @@ def view_char():
 king_dialogue = False
 
 def Sanctuary_Gates():
-  system('cls')
+  cls()
   dialogue("--- You travel to the city gates.")
   while True:
     if king_dialogue:
@@ -369,11 +369,11 @@ def Sanctuary_Gates():
       Sanctuary_Kings_Palace()
       return
     elif option_gate == "exit":
-      system('cls')
+      cls()
       dialogue("You return to the town square.")
       return
     else:
-      system('cls')
+      cls()
       gate_random = randint(1, 3)
       if gate_random == 1:
         dialogue("What are you waiting for? Go on!")
