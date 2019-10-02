@@ -38,27 +38,27 @@ def intro():
 2) Sorcerer
 3) Ranger
 4) Paladin""")
-    Class = dialogue()
+    class_pick = dialogue()
     cls()
-    if Class == "1":
+    if class_pick == "1":
       dialogue("""--- You chose the warrior class, which favors Strength.
     - Courage, above all else, is the first quality of a warrior!
   """)
       character["Class"] = "Warrior"
       break
-    elif Class == "2":
+    elif class_pick == "2":
       dialogue("""--- You chose the sorcerer class, which favors Intelligence.
     - The true sign of intelligence is not knowledge, but imagination.
   """)
       character["Class"] = "Sorcerer"
       break
-    elif Class == "3":
+    elif class_pick == "3":
       dialogue("""--- You chose the ranger class, which favors Agility.
     - Accuracy comes with great discipline.
   """)
       character["Class"] = "Ranger"
       break
-    elif Class == "4":
+    elif class_pick == "4":
       dialogue("""--- You chose the paladin class, which favors Defense.
     - To the righteous we bring hope.
   """)
@@ -69,16 +69,16 @@ def intro():
   
   if character["Class"] == "Warrior":
     character["Str"] += 3
-    weap = items["Axe"]
+    weap = axe
   elif character["Class"] == "Sorcerer":
     character["Int"] += 3
-    weap = items["Staff"]
+    weap = staff
   elif character["Class"] == "Ranger":
     character["Agi"] += 3
-    weap = items["Bow"]
+    weap = bow
   elif character["Class"] == "Paladin":
     character["Def"] += 3 
-    weap = items["Sword"]
+    weap = sword
 
   if dialogue("--- Type 'skip' to skip the tutorial, or press enter to continue ") == "skip":
     item_find(weap)
@@ -86,172 +86,141 @@ def intro():
   else:
     dialogue(f"Welcome to The Realm of Asathryne, {character['Name']}. A kingdom filled with adventure and danger, with much in store for those brave enough to explore it. Of course, nothing a {character['Class']} such as yourself can't handle.")
     dialogue("Oh, of course! Allow me to introduce myself. My name is Kanron, your advisor.")
-    dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {character['Name']} needs a {weap['Name']}!")
+    dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {character['Class']} needs a {weap.name}!")
     item_find(weap)
     dialogue("Before you go venturing off into the depths of this realm, you must first master some basic skills.")
-    Help()
+    stat_info()
     dialogue("Let's upgrade your stats. For your character, you recieve an extra 3 skill points in the stat that your class favors, and you will recieve 1 level up.")
     lvlup()
     dialogue("Great job! Now that you have learned the basics, it is time you start your journey into the Realm of Asathryne.")
     dialogue("If you ever need me to explain things again, just look for the help option in the menu. Good luck on your journey!")
 
-item_1 = {
-  "Name": "Axe",
-  "Value": 10,
-  "Cons": False, #consumable
-  "Quest": False #quest item
-}
+class Item:
+  
+  def __init__(self, name, value = 0, cons = False, quest = False):
+    
+    self.name = name
+    self.value = value
+    self.cons = cons
+    self.quest = quest
 
-item_2 = {
-  "Name": "Staff",
-  "Value": 10,
-  "Cons": False,
-  "Quest": False
-}
+  def __repr__(self):
+    
+    return self.name
+  
+  def __str__(self):
 
-item_3 = {
-  "Name": "Bow",
-  "Value": 10,
-  "Cons": False,
-  "Quest": False
-}
+    return self.name
 
-item_4 = {
-  "Name": "Sword",
-  "Value": 10,
-  "Cons": False,
-  "Quest": False
-}
+class Ability:
+  
+  def __init__(self, name, desc, type, stat, lvl = 0, max = 3):
+    
+    self.name = name
+    self.desc = desc
+    self.type = type
+    self.lvl = lvl
+    self.max = max
+    self.stat = stat
+  
+  def __repr__(self):
+    
+    return self.name
+  
+  def __str__(self):
 
-item_5 = {
-  "Name": "Sanctuary Key",
-  "Value": 0,
-  "Cons": False,
-  "Quest": True
-}
+    return self.name
 
-item_6 = {
-  "Name": "Health Potion",
-  "Value": 20,
-  "Cons": True,
-  "Quest": False
-}
+axe = Item("Axe", 10)
+staff = Item("Staff", 10)
+bow = Item("Bow", 10)
+sword = Item("Sword", 10)
+sanctuary_key = Item("Sanctuary Key", quest = True)
+pot_heath = Item("Heath Potion", 20, cons = True)
+pot_mana = Item("Mana Potion", 20, cons = True)
 
-item_7 = {
-  "Name": "Mana Potion",
-  "Value": 20,
-  "Cons": True,
-  "Quest": False
-}
+stun = Ability(
+name = "Stun",
+desc = "You swing with your weapon, with so much force that the enemy cannot use abilities for 2 turns.",
+type = "Str",
+stat = 8)
 
-abi_1 = {
-  "Name": "Stun",
-  "Desc": "You swing with your weapon, with so much force that the enemy cannot use abilities for 2 turns.",
-  "Type": "Str",
-  "Lvl": 0,
-  "Max": 3,
-  "Stat": 8,
-  "Req": True
-}
+fireball = Ability(
+name = "Fireball",
+desc = "You cast a fireball at your enemy, and on impact, it has a chance to burn the enemy.",
+type = "Int",
+stat = 8)
 
-abi_2 = {
-  "Name": "Fireball",
-  "Desc": "You cast a fireball at your enemy, and on impact, it has a chance to burn the enemy.",
-  "Type": "Int",
-  "Lvl": 0,
-  "Max": 3,
-  "Stat": 8,
-  "Req": True
-}
+sure_shot = Ability(
+name = "Sure Shot",
+desc = "You fire a well-aimed shot from your bow, which can't miss, and deals critical damage.",
+type = "Agi",
+stat = 8)
 
-abi_3 = {
-  "Name": "Sure Shot",
-  "Desc": "You fire a well-aimed shot from your bow, which can't miss, and deals critical damage.",
-  "Type": "Agi",
-  "Lvl": 0,
-  "Max": 3,
-  "Stat": 8,
-  "Req": True
-}
+protection = Ability(
+name = "Protection",
+desc = "You summon a magical wall of protection, which prevents half of the damage dealt to you for 3 turns.",
+type = "Def",
+stat = 8)
 
-abi_4 = {
-  "Name": "Protection",
-  "Desc": "You summon a magical wall of protection, which prevents half of the damage dealt to you for 3 turns.",
-  "Type": "Def",
-  "Lvl": 0,
-  "Max": 3,
-  "Stat": 8,
-  "Req": True
-}
-
-items = {
-  "Axe": item_1,
-  "Staff": item_2,
-  "Bow": item_3,
-  "Sword": item_4,
-  "Sanctuary Key": item_5,
-}
-
-abilities = [abi_1, abi_2, abi_3, abi_4]
+abilities = [stun, fireball, sure_shot, protection]
 
 def learn_ability(): #only used in lvlup, but might be used in other places later on
   while True:
     choice = 0
     ability_list = []
-    for a in abilities:
-      if a["Max"] > a["Lvl"]:
-        if a["Type"] == "Str":
-          if character["Str"] >= a["Stat"]:
-            ability_list.append(a)
-        elif a["Type"] == "Int":
-          if character["Int"] >= a["Stat"]:
-            ability_list.append(a)
-        elif a["Type"] == "Agi":
-          if character["Agi"] >= a["Stat"]:
-            ability_list.append(a)
-        elif a["Type"] == "Def":
-          if character["Def"] >= a["Stat"]:
-            ability_list.append(a)
+    for abi in abilities:
+      if abi.max > abi.lvl:
+        if abi.type == "Str":
+          if character["Str"] >= abi.stat:
+            ability_list.append(abi)
+        elif abi.type == "Int":
+          if character["Int"] >= abi.stat:
+            ability_list.append(abi)
+        elif abi.type == "Agi":
+          if character["Agi"] >= abi.stat:
+            ability_list.append(abi)
+        elif abi.type == "Def":
+          if character["Def"] >= abi.stat:
+            ability_list.append(abi)
     if ability_list == []:
       dialogue("--- There are no avaliable abilities to learn/upgrade.")
       return True
     print("--- Choose an ability to learn/upgrade.")
-    for a in ability_list:
+    for abi in ability_list:
       choice += 1
-      print(f"{choice}) {a['Name']} ({a['Lvl']}/{a['Max']}): {a['Desc']}")
+      print(f"{choice}) {abi.name} ({abi.lvl}/{abi.max}): {abi.desc}")
     x = num_input(" ")
     if x > choice or x == 0:
       cls()
       print("--- Type the corresponding number to learn an ability.")
     else:	
       choice = 0
-      for a in ability_list:
+      for abi in ability_list:
         choice += 1
         if x == choice:
           cls()
-          if a["Lvl"] == 0:
-          	dialogue(f"--- You have learned {a['Name']}.")
-          else:
-            dialogue(f"--- You have upgraded {a['Name']}.")
-          character["Abilities"].append(a)
-          a["Lvl"] += 1
+          if abi.lvl == 0: dialogue(f"--- You have learned {abi.name}.")
+          else: dialogue(f"--- You have upgraded {abi.name}.")
+          character["Abilities"].append(abi)
+          abi.lvl += 1
           character["AbiPts"] -= 1
           return False
 
 def item_find(item): #whenever you find an item, it will give you the option to add it to your inv or leave it
   while True:
-    if item["Quest"]:
+    if item.quest:
       character["Inventory"].append(item)
-      dialogue(f"--- You have recieved {item['Name']}, and it has been added to your inventory.")
+      dialogue(f"--- You have recieved {item.name}, and it has been added to your inventory.")
       return
-    x = dialogue(f"--- You have recieved a(n) {item['Name']}, worth {item['Value']} gold! Do you take it, or leave it behind? (T/L) ").upper()
+    x = dialogue(f"--- You have recieved a(n) {item.name}, worth {item.value} gold! Do you take it, or leave it behind? (T/L) ").upper()
     if x == "T":
       character["Inventory"].append(item)
-      dialogue(f"--- {item['Name']} has been added to your inventory.")
+      dialogue(f"--- {item.name} has been added to your inventory.")
       return
     if x == "L":
-      dialogue(f"--- You left the {item['Name']} behind, and {int(0.7 * item['Value'])} gold has been added to your inventory.")
-      character["Gold"] += int(0.7 * item["Value"]) #if you leave behind an item, you will recieve 70% of its value in gold
+      dialogue(f"--- You left the {item.name} behind, and {int(0.7 * item.value)} gold has been added to your inventory.")
+      character["Gold"] += int(0.7 * item.value) #if you leave behind an item, you will recieve 70% of its value in gold
       return
     else:
       print(" --- Type 'T' to take the item, or 'L' to leave it.")
@@ -306,7 +275,7 @@ def lvlup(): #Whenever the player's xp reaches a certain point, they will level 
       if learn_ability():
         break
 
-def Help():
+def stat_info():
   dialogue("Your stats determine your performance in battle, and the abilities you can learn.")
   dialogue("There are 4 main stats: Strength, Intelligence, Agility, and Defense.")
   while True:
@@ -319,18 +288,16 @@ def Help():
       dialogue("Your AP (action points) determine your use of abilities.")
       dialogue("Your HP (health points) determine how much damage you can take before you perish.")
       break
-    elif learn_more == 'n':
-      break
-    else:
-      print("Type 'Y' or 'N'.")
+    elif learn_more == 'n': break
+    else: print("Type 'Y' or 'N'.")
   dialogue("Let's talk about your level.")
   dialogue("Your level represents how powerful you are, and determines the level of your enemies; when you go up a level, you will recieve 3 skill points to spend on any of the 4 stats, and 1 ability point to learn/upgrade abilities. Additionally, your HP and AP will automatically increase.")
   dialogue("You can gain XP (experience points) in battle; when you have enough, you'll go up one level and get to use your skill points.")
 
 def item_remove(item):
   for i in character["Inventory"]:
-    if i == item:
-      dialogue(f"--- {item['Name']} has been removed from your inventory.")
+    if i is item:
+      dialogue(f"--- {item.name} has been removed from your inventory.")
       character["Inventory"].remove(item)
 
 def view_char():
@@ -354,7 +321,7 @@ def Sanctuary_Gates():
         return
       elif last_option == "2":
         dialogue("--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.")
-        item_remove(items["Sanctuary Key"])
+        item_remove(sanctuary_key)
         dialogue("Good luck out there, traveller.")
         Forest_of_Mysteries()
         return
@@ -421,7 +388,7 @@ def Sanctuary_Kings_Palace():
         dialogue(s)
       dialogue("You will be the one to free us from this crisis.")
       dialogue("Here, take this key; you will need it to open the gate into what remains of Asathryne.")
-      item_find(items["Sanctuary Key"])
+      item_find(sanctuary_key)
       dialogue("Fare well, young traveller.")
       king_dialogue = True
       return
@@ -431,7 +398,7 @@ def Sanctuary_Kings_Palace():
     option_2 = dialogue("Let me ask you a question, traveller. Would you like to hear the Story of Asathryne? (Y/N)").lower()
     if option_2 == "n":
       dialogue("Very well, very well, let me see... it's here somewhere... ah! The Key to Asathryne. Take this, young traveller, and good luck!")
-      item_find(items["Sanctuary Key"])
+      item_find(sanctuary_key)
       king_dialogue = True
       return
     elif option_2 == "y":
@@ -439,7 +406,7 @@ def Sanctuary_Kings_Palace():
         dialogue(s)
       dialogue("You will be the one to free us from this crisis.")
       dialogue("Here, take this key; you will need it to open the gate into what remains of Asathryne.")
-      item_find(items["Sanctuary Key"])
+      item_find(sanctuary_key)
       dialogue("Fare well, young traveller.")
       king_dialogue = True
       return
@@ -451,7 +418,7 @@ def Sanctuary_Apothecary():
   dialogue("Welcome to the Apothecary! We have a variety of potions for sale. Take a look at what we have in stock.")
   while True:
     print(f"--- You have {character['Gold']} gold.")
-    dialogue("Sorry, there's nothing for sale today. Come back later!")
+    dialogue("Sorry, there's nothing for sale today. Come back later!") #will be replaced with shop
     return
 
 def Sanctuary_Blacksmith():
@@ -459,7 +426,7 @@ def Sanctuary_Blacksmith():
   dialogue("Hello there, traveller! You look like you could use some armor, and a reliable weapon, too. Step into my blacksmith shop and take a look at my many wares!")
   while True:
     print(f"--- You have {character['Gold']} gold.")
-    dialogue("Sorry, there's nothing for sale today. Come back later!")
+    dialogue("Sorry, there's nothing for sale today. Come back later!") #will be replaced with shop
     return
 
 def Sanctuary_Town_Square():
@@ -482,7 +449,7 @@ def Sanctuary_Town_Square():
     elif option == "4":
       Sanctuary_Blacksmith()
     elif option == "5":
-      Help()
+      stat_info()
     elif option == "6":
       view_char()
     else:
