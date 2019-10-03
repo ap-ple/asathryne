@@ -342,7 +342,7 @@ player = PlayerCharacter(
 	xp = 4,
 	gold = 50)
 
-def intro():
+def main():
 	cls()
 	print(">>> Asathryne <<<")
 	dialogue("Press enter to start.\n")
@@ -361,6 +361,7 @@ def intro():
 		player.lvl_up()
 		dialogue("Great job! Now that you have learned the basics, it is time you start your journey into the Realm of Asathryne.")
 		dialogue("If you ever need me to explain things again, just look for the help option in the menu. Good luck on your journey!")
+	Sanctuary_Town_Square()
 
 def stat_info():
 	dialogue("Your stats determine your performance in battle, and the abilities you can learn.")
@@ -402,8 +403,7 @@ def Sanctuary_Gates():
 				return
 			else:
 				print("--- Invalid choice")
-		else:
-			break
+		else: break
 	dialogue("Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!")
 	while True:
 		option_gate = dialogue("Type 'go' to go meet King Brand, or 'exit' to return to the town square.\n").lower()
@@ -449,9 +449,7 @@ def Sanctuary_Kings_Palace():
 	dialogue(f"King Brand: At last, a brave {player.class_type} has arisen once more in this kingdom, here on a quest to save the kingdom of Asathryne from the dark evil that lies beyond the gates.")
 	dialogue("Tell me young traveller, what do you seek from me?")
 	while True:
-		option_1 = dialogue("""1) The gate keeper has sent me to meet you
-2) I'm here to learn about Asathryne
-""")
+		option_1 = dialogue("1) The gate keeper has sent me to meet you\n2) I'm here to learn about Asathryne\n")
 		if option_1 == "1":
 			dialogue("Ah, the gate keeper. He forbids anyone entry to the rest of Asathryne, simply because he wants to protect them.")
 			break
@@ -540,21 +538,20 @@ def Sanctuary_Blacksmith():
 		player.inventory.append(weap_choice)
 		cls()
 		print(f"You bought a {weap_choice} for {weap_choice.value} gold.")
+
 def Sanctuary_Town_Square():
 	dialogue("--- You arrive at Sanctuary's town square.\n")
 	while True:
 		option = dialogue("Sanctuary\n1) The Apothecary\n2) The King's Palace\n3) The Gates\n4) The Blacksmith\n5) Help\n6) View Character\n")
 		if option == "1": Sanctuary_Apothecary()
-		elif option == "2":	Sanctuary_Kings_Palace()
+		elif option == "2": Sanctuary_Kings_Palace()
 		elif option == "3": Sanctuary_Gates()
-		elif option == "4":	Sanctuary_Blacksmith()
-		elif option == "5":	stat_info()
-		elif option == "6":	player.view_stats()
+		elif option == "4": Sanctuary_Blacksmith()
+		elif option == "5": stat_info()
+		elif option == "6": player.view_stats()
 		else: print("Enter a number to travel to the designated location.")
 
 def Forest_of_Mysteries():
-	dialogue("Forest\n")
 	return
 
-intro()
-Sanctuary_Town_Square()
+if __name__ == "__main__": main()
