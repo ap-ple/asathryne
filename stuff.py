@@ -4,7 +4,7 @@ from os import system
 def cls(): system('cls')
 
 #Like input, but only accepts numbers; returns number in integer form, or 0 if the input is not a number
-def num_input(string):
+def num_input(string=""):
   x = input(string)
   if x.isdigit(): return int(x)
   else: return 0
