@@ -98,8 +98,8 @@ class PlayerCharacter(Character):
 
 		cls()
 		print(self)
-		print(f"Level - {self.lvl}")
-		print(f"Gold - {self.gold}")
+		print(f"Level {self.lvl}")
+		print(f"{self.gold} Gold")
 		print(f"Health - {self.health}")
 		print(f"Mana - {self.mana}")
 		print(f"Strength - {self.strength}")
