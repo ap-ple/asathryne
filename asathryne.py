@@ -17,6 +17,24 @@ class Character():
 		self.inventory = inventory
 		self.gold = gold
 
+	def view_stats(self):
+
+		"""Used to display data about the character to the player"""
+
+		cls()
+		print(self)
+		print(f"Level {self.lvl}")
+		print(f"{self.gold} Gold")
+		print(f"Health - {self.health}")
+		print(f"Mana - {self.mana}")
+		print(f"Strength - {self.strength}")
+		print(f"Intelligence - {self.intelligence}")
+		print(f"Agility - {self.agility}")
+		print(f"Defence - {self.defence}")
+		print(f"Abilities - {self.abilities}")
+		print(f"Inventory - {self.inventory}")
+		dialogue()
+
 	def __repr__(self):
 
 		return self.name
@@ -34,71 +52,16 @@ class PlayerCharacter(Character):
 		self.xp = xp
 		self.abi_points = abi_points
 
-	def build_char(self):
-
-		"""Used in the beginning to build the player character"""
-
-		while True:
-			self.name = dialogue("What is your name, traveller?\n")
-			if self.name != "": break
-			else: print("You must have have a name in this realm.")
-
-		while True:
-			print("""Choose a class.
-1) Warrior
-2) Sorcerer
-3) Ranger
-4) Paladin""")
-			class_pick = dialogue()
-			cls()
-			if class_pick == "1":
-				dialogue("""--- You chose the warrior class, which favors Strength.
-- Courage, above all else, is the first quality of a warrior!
-		""")
-				self.class_type = "Warrior"
-				break
-			elif class_pick == "2":
-				dialogue("""--- You chose the sorcerer class, which favors Intelligence.
-- The true sign of intelligence is not knowledge, but imagination.
-		""")
-				self.class_type = "Sorcerer"
-				break
-			elif class_pick == "3":
-				dialogue("""--- You chose the ranger class, which favors Agility.
-- Accuracy comes with great discipline.
-		""")
-				self.class_type = "Ranger"
-				break
-			elif class_pick == "4":
-				dialogue("""--- You chose the paladin class, which favors Defence.
-- To the righteous we bring hope.
-		""")
-				self.class_type = "Paladin"
-				break
-			else:
-				print("--- Invalid choice")
-		global weap
-		if self.class_type == "Warrior":
-			self.strength += 3
-			weap = axe
-		elif self.class_type == "Sorcerer":
-			self.intelligence += 3
-			weap = staff
-		elif self.class_type == "Ranger":
-			self.agility += 3
-			weap = bow
-		elif self.class_type == "Paladin":
-			self.defence += 3 
-			weap = sword
-
-	def view_char(self):
+	def view_stats(self):
 
 		"""Used to display data about the player character to the player"""
 
 		cls()
 		print(self)
-		print(f"Level {self.lvl}")
+		print(f"Level {self.lvl} {self.class_type}")
 		print(f"{self.gold} Gold")
+		print(f"XP - {self.xp}/{(self.lvl + 2) ** 2}")
+		print(f"{self.abi_points} ability points left")
 		print(f"Health - {self.health}")
 		print(f"Mana - {self.mana}")
 		print(f"Strength - {self.strength}")
@@ -109,6 +72,45 @@ class PlayerCharacter(Character):
 		print(f"Inventory - {self.inventory}")
 		dialogue()
 
+	def build_char(self):
+
+		"""Used in the beginning to build the player character"""
+
+		while True:
+			self.name = dialogue("What is your name, traveller?\n")
+			if self.name != "": break
+			else: print("You must have have a name in this realm.")
+
+		while True:
+			class_pick = dialogue("Choose a class.\n1) Warrior\n2) Sorcerer\n3) Ranger\n4) Paladin\n")
+			global weap
+			if class_pick == "1":
+				dialogue("--- You chose the warrior class, which favors Strength.\n- Courage, above all else, is the first quality of a warrior!\n")
+				self.class_type = "Warrior"
+				self.strength += 3
+				weap = axe
+				break
+			elif class_pick == "2":
+				dialogue("--- You chose the sorcerer class, which favors Intelligence.\n- The true sign of intelligence is not knowledge, but imagination.\n")
+				self.class_type = "Sorcerer"
+				self.intelligence += 3
+				weap = staff
+				break
+			elif class_pick == "3":
+				dialogue("--- You chose the ranger class, which favors Agility.\n- Accuracy comes with great discipline.\n")
+				self.class_type = "Ranger"
+				self.agility += 3
+				weap = bow
+				break
+			elif class_pick == "4":
+				dialogue("--- You chose the paladin class, which favors Defence.\n- To the righteous we bring hope.\n")
+				self.class_type = "Paladin"
+				self.defence += 3 
+				weap = sword
+				break
+			else:
+				print("--- Invalid choice")
+
 	def item_find(self, item):
 
 		"""Used whenever the player character has found an item"""
@@ -116,15 +118,15 @@ class PlayerCharacter(Character):
 		while True:
 			if item.quest:
 				self.inventory.append(item)
-				dialogue(f"--- You have recieved {item}, and it has been added to your inventory.")
+				dialogue(f"--- You have recieved {item}, and it has been added to your inventory.\n")
 				return
-			x = dialogue(f"--- You have recieved a(n) {item}, worth {item.value} gold! Do you take it, or leave it behind? (T/L) ").upper()
+			x = dialogue(f"--- You have recieved a(n) {item}, worth {item.value} gold! Do you take it, or leave it behind? (T/L)\n").upper()
 			if x == "T":
 				self.inventory.append(item)
-				dialogue(f"--- {item} has been added to your inventory.")
+				dialogue(f"--- {item} has been added to your inventory.\n")
 				return
 			if x == "L":
-				dialogue(f"--- You left the {item} behind, and {int(0.7 * item.value)} gold has been added to your inventory.")
+				dialogue(f"--- You left the {item} behind, and {int(0.7 * item.value)} gold has been added to your inventory.\n")
 				self.gold += int(0.7 * item.value) #if you leave behind an item, you will recieve 70% of its value in gold
 				return
 			else:
@@ -136,7 +138,7 @@ class PlayerCharacter(Character):
 
 		for i in self.inventory:
 			if i is item:
-				dialogue(f"--- {item} has been removed from your inventory.")
+				dialogue(f"--- {item} has been removed from your inventory.\n")
 				self.inventory.remove(item)
 
 	def learn_ability(self):
@@ -144,7 +146,6 @@ class PlayerCharacter(Character):
 		"""Used whenever the player character can learn a new ability; only used in lvl_up as of current"""
 
 		while True:
-			choice = 0
 			ability_list = []
 			for abi in abilities:
 				if abi.max_lvl > abi.lvl:
@@ -161,28 +162,29 @@ class PlayerCharacter(Character):
 						if self.defence >= abi.minimum_stat:
 							ability_list.append(abi)
 			if ability_list == []:
-				dialogue("--- There are no avaliable abilities to learn/upgrade.")
+				dialogue("--- There are no avaliable abilities to learn/upgrade.\n")
 				return True
 			print("--- Choose an ability to learn/upgrade.")
+			x = 0
 			for abi in ability_list:
-				choice += 1
-				print(f"{choice}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}")
-			x = num_input(" ")
-			if x > choice or x == 0:
+				x += 1
+				print(f"{x}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}")
+			choice = num_input()
+			if choice > x or choice == 0:
 				cls()
 				print("--- Invalid choice")
-			else: 
-				choice = 0
-				for abi in ability_list:
-					choice += 1
-					if x == choice:
-						cls()
-						if abi.lvl == 0: dialogue(f"--- You have learned {abi}.")
-						else: dialogue(f"--- You have upgraded {abi}.")
-						self.abilities.append(abi)
-						abi.lvl += 1
-						self.abi_points -= 1
-						return False
+				continue
+			x = 0
+			for abi in ability_list:
+				x += 1
+				if choice == x:
+					cls()
+					if abi.lvl == 0: dialogue(f"--- You have learned {abi}.\n")
+					else: dialogue(f"--- You have upgraded {abi}.\n")
+					self.abilities.append(abi)
+					abi.lvl += 1
+					self.abi_points -= 1
+					return False
 
 	def lvl_up(self):
 
@@ -194,7 +196,7 @@ class PlayerCharacter(Character):
 			self.health += 50
 			self.mana += 25
 			self.abi_points += 1
-			dialogue(f"--- You have leveled up to level {self.lvl}! Your power increases.")
+			dialogue(f"--- You have leveled up to level {self.lvl}! Your power increases.\n")
 			points = 3
 			while True:
 				strength = num_input(f"--- Strength: {self.strength} ({points} points remaining) Add: ")
@@ -285,7 +287,6 @@ defence - Determines how much damage the character take from physical attacks
 abilities - list of abilities the character can use in battle
 inventory - list of items the character carries
 gold - currency carried by the character
-
 player character
 class - determines what stat you favor; underdeveloped as of current
 xp - Gain XP in battle; when you have enough, you will go up one level and you will get to use your skill points.
@@ -300,6 +301,7 @@ sanctuary_key = Item("Sanctuary Key", quest = True)
 pot_health = Item("Health Potion", 20, consumable = True)
 pot_mana = Item("Mana Potion", 20, consumable = True)
 potions = [pot_health, pot_mana]
+weapons = [axe, staff, bow, sword]
 
 stun = Ability(
 	name = "Stun",
@@ -343,9 +345,9 @@ player = PlayerCharacter(
 def intro():
 	cls()
 	print(">>> Asathryne <<<")
-	dialogue("Press enter to start.")
+	dialogue("Press enter to start.\n")
 	player.build_char()
-	if dialogue("--- Type 'skip' to skip the tutorial, or press enter to continue ") == "skip":
+	if dialogue("--- Type 'skip' to skip the tutorial, or press enter to continue\n") == "skip":
 		player.item_find(weap)
 		player.lvl_up()
 	else:
@@ -364,7 +366,7 @@ def stat_info():
 	dialogue("Your stats determine your performance in battle, and the abilities you can learn.")
 	dialogue("There are 4 main stats: Strength, Intelligence, Agility, and Defense.")
 	while True:
-		learn_more = dialogue("Do you want to learn more about stats? (Y/N): ").lower()
+		learn_more = dialogue("Do you want to learn more about stats? (Y/N)\n").lower()
 		if learn_more == 'y':
 			dialogue("Strength increases the amount of damage you deal with physical attacks.")
 			dialogue("Intelligence increases the potency of your spells.")
@@ -388,8 +390,7 @@ def Sanctuary_Gates():
 		if king_dialogue:
 			dialogue("Asathryne Gatekeeper: Halt there, young - ")
 			dialogue("Oh. You spoke with the King? I suppose my orders are to let you through then. Here, hand me the key.")
-			last_option = dialogue("""1) Return to Sanctuary
-2) Go through the gates""")
+			last_option = dialogue("1) Return to Sanctuary\n2) Go through the gates\n")
 			if last_option == "1":
 				dialogue("Very well. Return to the town square, and come back here when you are ready.")
 				return
@@ -405,23 +406,20 @@ def Sanctuary_Gates():
 			break
 	dialogue("Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!")
 	while True:
-		option_gate = dialogue("Type 'go' to go meet King Brand, or 'exit' to return to the town square. ").lower()
+		option_gate = dialogue("Type 'go' to go meet King Brand, or 'exit' to return to the town square.\n").lower()
 		if option_gate == "go":
 			Sanctuary_Kings_Palace()
 			return
 		elif option_gate == "exit":
 			cls()
-			dialogue("You return to the town square.")
+			dialogue("--- You return to the town square.")
 			return
 		else:
 			cls()
 			gate_random = randint(1, 3)
-			if gate_random == 1:
-				dialogue("What are you waiting for? Go on!")
-			elif gate_random == 2:
-				dialogue("Don't think standing here will convince me to open this gate.")
-			else:
-				dialogue("Brand is waiting for you.")
+			if gate_random == 1: dialogue("What are you waiting for? Go on!")
+			elif gate_random == 2: dialogue("Don't think standing here will convince me to open this gate.")
+			else: dialogue("Brand is waiting for you.")
 
 def Sanctuary_Kings_Palace():
 	global king_dialogue
@@ -469,7 +467,7 @@ def Sanctuary_Kings_Palace():
 		else:
 			print("--- Invalid choice")
 	while True:
-		option_2 = dialogue("Let me ask you a question, traveller. Would you like to hear the Story of Asathryne? (Y/N)").lower()
+		option_2 = dialogue("Let me ask you a question, traveller. Would you like to hear the Story of Asathryne? (Y/N)\n").lower()
 		if option_2 == "n":
 			dialogue("Very well, very well, let me see... it's here somewhere... ah! The Key to Asathryne. Take this, young traveller, and good luck!")
 			player.item_find(sanctuary_key)
@@ -517,41 +515,46 @@ def Sanctuary_Apothecary():
 
 def Sanctuary_Blacksmith():
 	dialogue("--- You travel to the blacksmith.")
-	dialogue("Hello there, traveller! You look like you could use some armor, and a reliable weapon, too. Step into my blacksmith shop and take a look at my many wares!")
+	dialogue("Hello there, traveller! You look like you could use some armor, and a reliable weapon, too. Step into my blacksmith shop and take a look at my many wares!\n")
 	while True:
 		print(f"--- You have {player.gold} gold.")
-		dialogue("Sorry, there's nothing for sale today. Come back later!") #will be replaced with shop
-		return
-
+		x = 1
+		for w in weapons:
+			print(f"{x}) {w}: {w.value} gold")
+			x += 1
+		print(f"{x}) Leave")
+		choice = num_input()
+		if choice == len(weapons) + 1:
+			cls()
+			return
+		if choice <= 0 or choice > len(weapons):
+			cls()
+			print("Invalid choice")
+			continue
+		weap_choice = weapons[choice - 1]
+		if weap_choice.value > player.gold:
+			cls()
+			print("Insufficient funds")
+			continue
+		player.gold -= weap_choice.value
+		player.inventory.append(weap_choice)
+		cls()
+		print(f"You bought a {weap_choice} for {weap_choice.value} gold.")
 def Sanctuary_Town_Square():
-	dialogue("--- You arrive at Sanctuary's town square.")
+	dialogue("--- You arrive at Sanctuary's town square.\n")
 	while True:
-		option = dialogue("""Sanctuary
-1) The Apothecary
-2) The King's Palace
-3) The Gates
-4) The Blacksmith
-5) Help
-6) View Character
-""")
-		if option == "1":
-			Sanctuary_Apothecary()
-		elif option == "2":
-			Sanctuary_Kings_Palace()
-		elif option == "3":
-			Sanctuary_Gates()
-		elif option == "4":
-			Sanctuary_Blacksmith()
-		elif option == "5":
-			stat_info()
-		elif option == "6":
-			player.view_char()
-		else:
-			print("Enter a number to travel to the designated location.")
+		option = dialogue("Sanctuary\n1) The Apothecary\n2) The King's Palace\n3) The Gates\n4) The Blacksmith\n5) Help\n6) View Character\n")
+		if option == "1": Sanctuary_Apothecary()
+		elif option == "2":	Sanctuary_Kings_Palace()
+		elif option == "3": Sanctuary_Gates()
+		elif option == "4":	Sanctuary_Blacksmith()
+		elif option == "5":	stat_info()
+		elif option == "6":	player.view_stats()
+		else: print("Enter a number to travel to the designated location.")
 
 def Forest_of_Mysteries():
-	dialogue("Forest")
+	dialogue("Forest\n")
 	return
-		
+
 intro()
 Sanctuary_Town_Square()
