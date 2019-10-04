@@ -63,8 +63,8 @@ class PlayerCharacter(Character):
 		print(f"{self.gold} Gold")
 		print(f"XP - {self.xp}/{(self.lvl + 2) ** 2}")
 		print(f"{self.abi_points} ability points left")
-		print(f"Health - {self.health}")
-		print(f"Mana - {self.mana}")
+		print(f"{self.health} Health")
+		print(f"{self.mana} Mana")
 		print(f"Strength - {self.strength}")
 		print(f"Intelligence - {self.intelligence}")
 		print(f"Agility - {self.agility}")
@@ -83,7 +83,7 @@ class PlayerCharacter(Character):
 			else: print("You must have have a name in this realm.")
 
 		while True:
-			class_pick = dialogue("Choose a class.\n1) Warrior\n2) Sorcerer\n3) Ranger\n4) Paladin\n")
+			class_pick = num_input("Choose a class.\n1) Warrior\n2) Sorcerer\n3) Ranger\n4) Paladin\n")
 			global weap
 			if class_pick == "1":
 				dialogue("--- You chose the warrior class, which favors Strength.\n- Courage, above all else, is the first quality of a warrior!\n")
@@ -145,7 +145,7 @@ class PlayerCharacter(Character):
 							ability_list.append(abi)
 			if ability_list == []:
 				dialogue("--- There are no avaliable abilities to learn/upgrade.\n")
-				return True
+				return False
 			print("--- Choose an ability to learn/upgrade.")
 			x = 0
 			for abi in ability_list:
@@ -167,7 +167,7 @@ class PlayerCharacter(Character):
 					else: dialogue(f"--- You have upgraded {abi}.\n")
 					abi.lvl += 1
 					self.abi_points -= 1
-					return False
+					return True
 
 	def lvl_up(self):
 
@@ -219,9 +219,8 @@ class PlayerCharacter(Character):
 					cls() 
 					break
 				cls()
-			while self.abi_points != 0:
-				if self.learn_ability():
-					break
+			while self.abi_points > 0:
+				if not self.learn_ability(): break
 
 	def combat(self, enemy):
 
@@ -233,12 +232,51 @@ class PlayerCharacter(Character):
 		enemy.current_health = enemy.health
 		enemy.current_mana = enemy.mana
 
+		dialogue(f"You encountered {enemy}!")
+		your_turn = True
 		while True:
-			dialogue(f"You encountered {enemy}!")
+			if your_turn:
+				print(f"{self}\nHealth - {self.current_health}/{self.health}\nMana - {self.current_mana}/{self.mana}\n")
+				print(f"{enemy}\nHealth - {enemy.current_health}/{enemy.health}\nMana - {enemy.current_mana}/{enemy.mana}\n")
+				print("1) Attack")
+				choice = num_input()
+				cls()
+				if choice == 1:
+					dialogue("You attack with your weapon!")
+					if randint(1, 100) > (enemy.agility / (self.agility * 3)) * 100:
+						damage = (self.strength * 3) - (enemy.defence * 2)
+						damage = randint(damage - 3, damage + 3)
+						dialogue(f"You hit {enemy} for {damage} damage!")
+						enemy.current_health -= damage
+						if enemy.current_health <= 0:
+							win = True
+							break
+					else: dialogue(f"You missed!")
+					your_turn = False
+				else:
+					print("--- Invalid choice")
+					continue
+			else:
+				dialogue(f"{enemy} attacks!")
+				if randint(1, 100) > (self.agility / (enemy.agility * 3)) * 100:
+					damage = (enemy.strength * 3) - (self.defence * 2)
+					damage = randint(damage - 3, damage + 3)
+					if damage < 0: damage = 0
+					dialogue(f"{enemy} hit you for {damage} damage!")
+					self.current_health -= damage
+					if self.current_health <= 0:
+						win = False
+						break
+				else: dialogue(f"It missed!")
+				your_turn = True
+
+		if win:
 			dialogue(f"You defeated {enemy}, and gained {enemy.xp} xp and {enemy.gold} gold!")
 			self.xp += enemy.xp
 			return True
-		return False
+		else:
+			dialogue("You perished.")
+			return False
 
 class Item:
 	
@@ -567,7 +605,6 @@ def sanctuary_kings_palace_visit():
 sanctuary_kings_palace = Location("Sanctuary King's Palace", sanctuary_kings_palace_visit)
 
 def forest_main_visit():
-	dialogue("There's a forest here but also a slime")
 	player.combat(Slime(
 		name = "Green Slime",
 		health = 50,
@@ -578,7 +615,7 @@ def forest_main_visit():
 		agility = 2,
 		defence = 2,
 		gold = randint(3, 6),
-		xp = randint(1, 3)))
+		xp = randint(2, 3)))
 
 forest_main = Location("Forest Main", forest_main_visit)
 sanctuary = Area("Sanctuary", [sanctuary_gates, sanctuary_kings_palace, sanctuary_apothecary, sanctuary_blacksmith])
