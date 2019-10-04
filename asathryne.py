@@ -3,7 +3,7 @@ from stuff import *
 
 class Character():
 	
-	def __init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, abilities = [], inventory = [], gold = 0):
+	def __init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, xp, abilities = [], inventory = [], gold = 0):
 
 		self.name = name 
 		self.health = health
@@ -16,6 +16,7 @@ class Character():
 		self.abilities = abilities
 		self.inventory = inventory
 		self.gold = gold
+		self.xp = xp
 
 	def view_stats(self):
 
@@ -24,6 +25,7 @@ class Character():
 		cls()
 		print(self)
 		print(f"Level {self.lvl}")
+		print(f"{self.xp} xp")
 		print(f"{self.gold} Gold")
 		print(f"Health - {self.health}")
 		print(f"Mana - {self.mana}")
@@ -47,9 +49,8 @@ class PlayerCharacter(Character):
 	
 	def __init__(self, name, class_type, health, mana, lvl, strength, intelligence, agility, defence, abilities = [], inventory = [], gold = 0, xp = 0, abi_points = 0):
 
-		Character.__init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, abilities, inventory, gold)
+		Character.__init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, xp, abilities, inventory, gold)
 		self.class_type = class_type
-		self.xp = xp
 		self.abi_points = abi_points
 
 	def view_stats(self):
@@ -119,6 +120,8 @@ class PlayerCharacter(Character):
 			if i is item:
 				dialogue(f"--- {item} has been removed from your inventory.\n")
 				self.inventory.remove(item)
+				return True
+		return False
 
 	def learn_ability(self):
 
@@ -158,9 +161,10 @@ class PlayerCharacter(Character):
 				x += 1
 				if choice == x:
 					cls()
-					if abi.lvl == 0: dialogue(f"--- You have learned {abi}.\n")
+					if abi.lvl == 0: 
+						dialogue(f"--- You have learned {abi}.\n")
+						self.abilities.append(abi)
 					else: dialogue(f"--- You have upgraded {abi}.\n")
-					self.abilities.append(abi)
 					abi.lvl += 1
 					self.abi_points -= 1
 					return False
@@ -169,6 +173,7 @@ class PlayerCharacter(Character):
 
 		"""Whenever the player's xp reaches a certain point, they will level up"""
 
+		cls()
 		while self.xp >= (self.lvl + 2) ** 2:
 			self.xp -= (self.lvl + 2) ** 2
 			self.lvl += 1
@@ -217,6 +222,23 @@ class PlayerCharacter(Character):
 			while self.abi_points != 0:
 				if self.learn_ability():
 					break
+
+	def combat(self, enemy):
+
+		"""Used whenever the player enters combat"""
+
+		self.current_health = self.health
+		self.current_mana = self.mana
+
+		enemy.current_health = enemy.health
+		enemy.current_mana = enemy.mana
+
+		while True:
+			dialogue(f"You encountered {enemy}!")
+			dialogue(f"You defeated {enemy}, and gained {enemy.xp} xp and {enemy.gold} gold!")
+			self.xp += enemy.xp
+			return True
+		return False
 
 class Item:
 	
@@ -281,9 +303,15 @@ class Area:
 				print(f"{x}) {l}")
 				x += 1
 			print(f"{x}) View Character")
+			if player.xp >= (player.lvl + 2) ** 2:
+				x += 1
+				print(f"{x}) Level up!")
 			choice = num_input()
 			if choice == len(self.locations) + 1: 
 				player.view_stats()
+				continue
+			if choice == len(self.locations) + 2 and player.xp >= (player.lvl + 2) ** 2: 
+				player.lvl_up()
 				continue
 			if choice <= 0 or choice > len(self.locations):
 				cls()
@@ -352,22 +380,26 @@ class Shop:
 				while True:
 					print(f"--- You have {player.gold} gold.")
 					x = 1
-					for i in player.inventory:
+					choice_inv = player.inventory
+					for i in choice_inv:
+						if i.quest:
+							choice_inv.remove(i)
+					for i in choice_inv:
 						print(f"{x}) {i} - {int(i.value * 0.8)} gold")
 						x += 1
 					print(f"{x}) Back")
 					choice = num_input()
 					cls()
-					if choice == x: break
+					if choice == len(choice_inv) + 1: break
 					if choice <= 0 or choice > x:
 						print("--- Invalid choice")
 						continue
-					choice = player.inventory[choice - 1]
+					choice = choice_inv[choice - 1]
 					player.gold += int(choice.value * 0.8)
 					player.inventory.remove(choice)
 					print(f"--- You sold a {choice} for {int(choice.value * 0.8)} gold.")
 				continue
-			if choice == x:	return
+			if choice == len(self.stock) + 2: return
 			if choice <= 0 or choice > x:
 				print("--- Invalid choice")
 				continue
@@ -386,6 +418,10 @@ class Shop:
 	def __str__(self):
 
 		return self.name
+
+class Slime(Character):
+
+	pass
 
 """
 character
@@ -447,8 +483,8 @@ def sanctuary_gates_visit():
 					dialogue("Very well. Return to the town square, and come back here when you are ready.")
 					return
 				elif last_option == "2":
-					dialogue("--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.")
 					player.item_remove(sanctuary_key)
+					dialogue("--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.")
 					gates_unlocked = True
 					dialogue("Good luck out there, traveller.")
 					sanctuary.locations[0] = forest_of_mysteries
@@ -531,12 +567,21 @@ def sanctuary_kings_palace_visit():
 sanctuary_kings_palace = Location("Sanctuary King's Palace", sanctuary_kings_palace_visit)
 
 def forest_main_visit():
-	dialogue("There's a forest here")
+	dialogue("There's a forest here but also a slime")
+	player.combat(Slime(
+		name = "Green Slime",
+		health = 50,
+		mana = 0,
+		lvl = 1,
+		strength = 3,
+		intelligence = 0,
+		agility = 2,
+		defence = 2,
+		gold = randint(3, 6),
+		xp = randint(1, 3)))
 
 forest_main = Location("Forest Main", forest_main_visit)
-
 sanctuary = Area("Sanctuary", [sanctuary_gates, sanctuary_kings_palace, sanctuary_apothecary, sanctuary_blacksmith])
-
 forest_of_mysteries = Area("Forest of Mysteries", [sanctuary, forest_main])
 
 stun = Ability(
