@@ -341,26 +341,43 @@ class Shop:
 			print(f"--- You have {player.gold} gold.")
 			x = 1
 			for i in self.stock:
-				print(f"{x}) {i}: {i.value} gold")
+				print(f"{x}) {i} - {i.value} gold")
 				x += 1
+			print(f"{x}) Sell items")
+			x += 1
 			print(f"{x}) Leave")
 			choice = num_input()
+			cls()
 			if choice == len(self.stock) + 1:
-				cls()
-				return
-			if choice <= 0 or choice > len(self.stock):
-				cls()
+				while True:
+					print(f"--- You have {player.gold} gold.")
+					x = 1
+					for i in player.inventory:
+						print(f"{x}) {i} - {int(i.value * 0.8)} gold")
+						x += 1
+					print(f"{x}) Back")
+					choice = num_input()
+					cls()
+					if choice == x: break
+					if choice <= 0 or choice > x:
+						print("--- Invalid choice")
+						continue
+					choice = player.inventory[choice - 1]
+					player.gold += int(choice.value * 0.8)
+					player.inventory.remove(choice)
+					print(f"--- You sold a {choice} for {int(choice.value * 0.8)} gold.")
+				continue
+			if choice == x:	return
+			if choice <= 0 or choice > x:
 				print("--- Invalid choice")
 				continue
 			choice = self.stock[choice - 1]
 			if choice.value > player.gold:
-				cls()
 				print("--- Insufficient funds")
 				continue
 			player.gold -= choice.value
 			player.inventory.append(choice)
-			cls()
-			print(f"You bought a {choice} for {choice.value} gold.")
+			print(f"--- You bought a {choice} for {choice.value} gold.")
 
 	def __repr__(self):
 
@@ -382,7 +399,6 @@ defence - Determines how much damage the character take from physical attacks
 abilities - list of abilities the character can use in battle
 inventory - list of items the character carries
 gold - currency carried by the character
-
 player character
 class - determines what stat you favor; underdeveloped as of current
 xp - Gain XP in battle; when you have enough, you will go up one level and you will get to use your skill points.
