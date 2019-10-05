@@ -84,26 +84,27 @@ class PlayerCharacter(Character):
 
 		while True:
 			class_pick = num_input("Choose a class.\n1) Warrior\n2) Sorcerer\n3) Ranger\n4) Paladin\n")
+			cls()
 			global weap
-			if class_pick == "1":
+			if class_pick == 1:
 				dialogue("--- You chose the warrior class, which favors Strength.\n- Courage, above all else, is the first quality of a warrior!\n")
 				self.class_type = "Warrior"
 				self.strength += 3
 				weap = axe
 				break
-			elif class_pick == "2":
+			elif class_pick == 2:
 				dialogue("--- You chose the sorcerer class, which favors Intelligence.\n- The true sign of intelligence is not knowledge, but imagination.\n")
 				self.class_type = "Sorcerer"
 				self.intelligence += 3
 				weap = staff
 				break
-			elif class_pick == "3":
+			elif class_pick == 3:
 				dialogue("--- You chose the ranger class, which favors Agility.\n- Accuracy comes with great discipline.\n")
 				self.class_type = "Ranger"
 				self.agility += 3
 				weap = bow
 				break
-			elif class_pick == "4":
+			elif class_pick == 4:
 				dialogue("--- You chose the paladin class, which favors Defence.\n- To the righteous we bring hope.\n")
 				self.class_type = "Paladin"
 				self.defence += 3 
