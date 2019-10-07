@@ -3,7 +3,7 @@ from stuff import *
 
 class Character():
 	
-	def __init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, xp, abilities = [], inventory = [], gold = 0):
+	def __init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, weap, xp, abilities = [], inventory = [], gold = 0):
 
 		self.name = name 
 		self.health = health
@@ -13,6 +13,7 @@ class Character():
 		self.intelligence = intelligence
 		self.agility = agility
 		self.defence = defence
+		self.weap = weap
 		self.abilities = abilities
 		self.inventory = inventory
 		self.gold = gold
@@ -47,9 +48,9 @@ class Character():
 
 class PlayerCharacter(Character):
 	
-	def __init__(self, name, class_type, health, mana, lvl, strength, intelligence, agility, defence, abilities = [], inventory = [], gold = 0, xp = 0, abi_points = 0):
+	def __init__(self, name, class_type, health, mana, lvl, strength, intelligence, agility, defence, weap = '', abilities = [], inventory = [], gold = 0, xp = 0, abi_points = 0):
 
-		Character.__init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, xp, abilities, inventory, gold)
+		Character.__init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, weap, xp, abilities, inventory, gold)
 		self.class_type = class_type
 		self.abi_points = abi_points
 
@@ -85,43 +86,52 @@ class PlayerCharacter(Character):
 		while True:
 			class_pick = num_input("Choose a class.\n1) Warrior\n2) Sorcerer\n3) Ranger\n4) Paladin\n")
 			cls()
-			global weap
 			if class_pick == 1:
 				dialogue("--- You chose the warrior class, which favors Strength.\n- Courage, above all else, is the first quality of a warrior!\n")
 				self.class_type = "Warrior"
 				self.strength += 3
-				weap = axe
+				self.inventory.append(axe)
 				break
 			elif class_pick == 2:
 				dialogue("--- You chose the sorcerer class, which favors Intelligence.\n- The true sign of intelligence is not knowledge, but imagination.\n")
 				self.class_type = "Sorcerer"
 				self.intelligence += 3
-				weap = staff
+				self.inventory.append(staff)
 				break
 			elif class_pick == 3:
 				dialogue("--- You chose the ranger class, which favors Agility.\n- Accuracy comes with great discipline.\n")
 				self.class_type = "Ranger"
 				self.agility += 3
-				weap = bow
+				self.inventory.append(bow)
 				break
 			elif class_pick == 4:
 				dialogue("--- You chose the paladin class, which favors Defence.\n- To the righteous we bring hope.\n")
 				self.class_type = "Paladin"
 				self.defence += 3 
-				weap = sword
+				self.inventory.append(sword)
 				break
 			else:
 				print("--- Invalid choice")
+
+	def equip(self, weapon):
+
+		"""Used to equip a weapon"""
+
+		if weapon in self.inventory:
+			self.inventory.remove(weapon)
+			self.weap = weapon
+			dialogue(f"--- {weapon} has been equipped.")
+			return True
+		return False
 
 	def item_remove(self, item):
 
 		"""Used to remove an item from the player's inventory"""
 
-		for i in self.inventory:
-			if i is item:
-				dialogue(f"--- {item} has been removed from your inventory.\n")
-				self.inventory.remove(item)
-				return True
+		if item in self.inventory:
+			dialogue(f"--- {item} has been removed from your inventory.\n")
+			self.inventory.remove(item)
+			return True
 		return False
 
 	def learn_ability(self):
@@ -205,9 +215,8 @@ class PlayerCharacter(Character):
 				cls()
 				if choice == 1:
 					dialogue("You attack with your weapon!")
-					if randint(1, 100) > (enemy.agility / (self.agility * 2)) * 100:
-						damage = int(self.strength * 5 * ((1 / enemy.defence) * 3))
-						damage = randint(damage - 3, damage + 3)
+					if randint(1, 100) < (self.agility / (self.agility + enemy.agility)) * 100:
+						damage = int(self.strength / (self.strength + enemy.defence) * randint(*self.weap.damage))
 						dialogue(f"You hit {enemy} for {damage} damage!")
 						enemy.current_health -= damage
 						if enemy.current_health <= 0:
@@ -221,9 +230,8 @@ class PlayerCharacter(Character):
 				your_turn = False
 			else:
 				dialogue(f"{enemy} attacks!")
-				if randint(1, 100) > (self.agility / (enemy.agility * 2)) * 100:
-					damage = int(enemy.strength * 5 * ((1 / self.defence) * 3))
-					damage = randint(damage - 3, damage + 3)
+				if randint(1, 100) < (enemy.agility / (enemy.agility + self.agility)) * 100:
+					damage = int(enemy.strength / (enemy.strength + self.defence) * randint(*enemy.weap.damage))
 					if damage < 0: damage = 0
 					dialogue(f"{enemy} hit you for {damage} damage!")
 					self.current_health -= damage
@@ -243,12 +251,11 @@ class PlayerCharacter(Character):
 
 class Item:
 	
-	def __init__(self, name, value = 0, amount = 0, consumable = False, quest = False):
+	def __init__(self, name, value = 0, amount = 0, quest = False):
 		
 		self.name = name
 		self.value = value
 		self.amount = amount
-		self.consumable = consumable
 		self.quest = quest
 
 	def find(self, char):
@@ -265,6 +272,13 @@ class Item:
 	def __str__(self):
 
 		return self.name
+
+class Weapon(Item):
+
+	def __init__(self, name, damage, value = 0, amount = 0, quest = False):
+
+		Item.__init__(self, name, value = 0, amount = 0)
+		self.damage = damage
 
 class Ability:
 	
@@ -436,13 +450,13 @@ king_story = [
 king_dialogue = False
 gates_dialogue = False
 
-axe = Item("Axe", 10)
-staff = Item("Staff", 10)
-bow = Item("Bow", 10)
-sword = Item("Sword", 10)
+axe = Weapon("Axe", (25, 50), 10)
+staff = Weapon("Staff", (25, 30), 10)
+bow = Weapon("Bow", (30, 35), 10)
+sword = Weapon("Sword", (35, 40), 10)
 sanctuary_key = Item("Sanctuary Key", quest = True)
-pot_health = Item("Health Potion", 20, consumable = True)
-pot_mana = Item("Mana Potion", 20, consumable = True)
+pot_health = Item("Health Potion", 20)
+pot_mana = Item("Mana Potion", 20)
 
 sanctuary_apothecary = Shop(
 	name = "Sanctuary Apothecary",
@@ -554,6 +568,7 @@ def forest_main_visit():
 		intelligence = 0,
 		agility = 2,
 		defence = 2,
+		weap = Weapon("Slime", (30, 40)),
 		gold = randint(3, 6),
 		xp = randint(2, 3)))
 
@@ -606,13 +621,13 @@ def main():
 	dialogue("Press enter to start.\n")
 	player.build_char()
 	if dialogue("--- Type 'skip' to skip the tutorial, or press enter to continue\n") == "skip":
-		weap.find(player)
+		player.equip(player.inventory[0])
 		player.lvl_up()
 	else:
 		dialogue(f"Welcome to The Realm of Asathryne, {player}. A kingdom filled with adventure and danger, with much in store for those brave enough to explore it. Of course, nothing a {player.class_type} such as yourself can't handle.")
 		dialogue("Oh, of course! Allow me to introduce myself. My name is Kanron, your advisor.")
-		dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {player.class_type} needs a {weap}!")
-		weap.find(player)
+		dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {player.class_type} needs a {player.inventory[0]}!")
+		player.equip(player.inventory[0])
 		dialogue("Before you go venturing off into the depths of this realm, you must first master some basic skills.")
 		dialogue("Your stats determine your performance in battle, and the abilities you can learn.")
 		dialogue("There are 4 main stats: Strength, Intelligence, Agility, and Defense.")
