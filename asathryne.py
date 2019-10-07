@@ -206,7 +206,7 @@ class PlayerCharacter(Character):
 				if choice == 1:
 					dialogue("You attack with your weapon!")
 					if randint(1, 100) > (enemy.agility / (self.agility * 2)) * 100:
-						damage = self.strength * 5
+						damage = self.strength * 5 * ((1 / enemy.defence) * 3)
 						damage = randint(damage - 3, damage + 3)
 						dialogue(f"You hit {enemy} for {damage} damage!")
 						enemy.current_health -= damage
@@ -222,7 +222,7 @@ class PlayerCharacter(Character):
 			else:
 				dialogue(f"{enemy} attacks!")
 				if randint(1, 100) > (self.agility / (enemy.agility * 2)) * 100:
-					damage = enemy.strength * 5
+					damage = enemy.strength * 5 * ((1 / self.defence) * 3)
 					damage = randint(damage - 3, damage + 3)
 					if damage < 0: damage = 0
 					dialogue(f"{enemy} hit you for {damage} damage!")
