@@ -128,40 +128,28 @@ class PlayerCharacter(Character):
 
 		"""Used whenever the player character can learn a new ability; only used in lvl_up as of current"""
 
+		ability_list = []
+		for abi in abilities: 
+			for stat in ["strength", "intelligence", "agility", "defence"]: 
+				if abi.stat == stat and getattr(self, stat) >= abi.minimum_stat and abi.lvl < abi.max_lvl: ability_list.append(abi)
+		if ability_list == []:
+			dialogue("--- There are no avaliable abilities to learn/upgrade.\n")
+			return False
 		while True:
-			ability_list = []
-			for abi in abilities:
-				if abi.max_lvl > abi.lvl:
-					if abi.stat == "Strength":
-						if self.strength >= abi.minimum_stat:
-							ability_list.append(abi)
-					elif abi.stat == "Intelligence":
-						if self.intelligence >= abi.minimum_stat:
-							ability_list.append(abi)
-					elif abi.stat == "Agility":
-						if self.agility >= abi.minimum_stat:
-							ability_list.append(abi)
-					elif abi.stat == "Defence":
-						if self.defence >= abi.minimum_stat:
-							ability_list.append(abi)
-			if ability_list == []:
-				dialogue("--- There are no avaliable abilities to learn/upgrade.\n")
-				return False
 			print("--- Choose an ability to learn/upgrade.")
 			x = 0
 			for abi in ability_list:
 				x += 1
 				print(f"{x}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}")
 			choice = num_input()
+			cls()
 			if choice > x or choice == 0:
-				cls()
 				print("--- Invalid choice")
 				continue
 			x = 0
 			for abi in ability_list:
 				x += 1
 				if choice == x:
-					cls()
 					if abi.lvl == 0: 
 						dialogue(f"--- You have learned {abi}.\n")
 						self.abilities.append(abi)
@@ -183,43 +171,15 @@ class PlayerCharacter(Character):
 			self.abi_points += 1
 			dialogue(f"--- You have leveled up to level {self.lvl}! Your power increases.\n")
 			points = 3
-			while True:
-				strength = num_input(f"--- Strength: {self.strength} ({points} points remaining) Add: ")
-				if strength > points:
-					strength = points
-				points -= strength
-				self.strength += strength
-				if points == 0:
+			while points > 0:
+				for stat in ["strength", "intelligence", "agility", "defence"]:
+					current_stat = getattr(self, stat)
+					upgrade = num_input(f"--- {stat.capitalize()}: {current_stat} ({points} points remaining) Add: ")
+					if upgrade > points: upgrade = points
+					points -= upgrade
+					setattr(self, stat, current_stat + upgrade)
 					cls()
-					break
-				cls()
-				intelligence = num_input(f"--- Intelligence: {self.intelligence} ({points} points remaining) Add: ")
-				if intelligence > points:
-					intelligence = points
-				points -= intelligence
-				self.intelligence += intelligence
-				if points == 0:
-					cls()
-					break
-				cls()
-				agility = num_input(f"--- Agility: {self.agility} ({points} points remaining) Add: ")
-				if agility > points:
-					agility = points
-				points -= agility
-				self.agility += agility
-				if points == 0:
-					cls()
-					break
-				cls()
-				defence = num_input(f"--- Defense: {self.defence} ({points} points remaining) Add: ")
-				if defence > points:
-					defence = points
-				points -= defence
-				self.defence += defence
-				if points == 0:
-					cls() 
-					break
-				cls()
+					if points == 0:	break
 			while self.abi_points > 0:
 				if not self.learn_ability(): break
 
@@ -240,27 +200,29 @@ class PlayerCharacter(Character):
 				print(f"{self}\nHealth - {self.current_health}/{self.health}\nMana - {self.current_mana}/{self.mana}\n")
 				print(f"{enemy}\nHealth - {enemy.current_health}/{enemy.health}\nMana - {enemy.current_mana}/{enemy.mana}\n")
 				print("1) Attack")
+				print("2) Pass")
 				choice = num_input()
 				cls()
 				if choice == 1:
 					dialogue("You attack with your weapon!")
-					if randint(1, 100) > (enemy.agility / (self.agility * 3)) * 100:
-						damage = (self.strength * 3) - (enemy.defence * 2)
+					if randint(1, 100) > (enemy.agility / (self.agility * 2)) * 100:
+						damage = self.strength * 5
 						damage = randint(damage - 3, damage + 3)
 						dialogue(f"You hit {enemy} for {damage} damage!")
 						enemy.current_health -= damage
 						if enemy.current_health <= 0:
 							win = True
 							break
-					else: dialogue(f"You missed!")
-					your_turn = False
+					else: dialogue("You missed!")
+				elif choice == 2: dialogue("You passed.")
 				else:
 					print("--- Invalid choice")
 					continue
+				your_turn = False
 			else:
 				dialogue(f"{enemy} attacks!")
-				if randint(1, 100) > (self.agility / (enemy.agility * 3)) * 100:
-					damage = (enemy.strength * 3) - (self.defence * 2)
+				if randint(1, 100) > (self.agility / (enemy.agility * 2)) * 100:
+					damage = enemy.strength * 5
 					damage = randint(damage - 3, damage + 3)
 					if damage < 0: damage = 0
 					dialogue(f"{enemy} hit you for {damage} damage!")
@@ -268,7 +230,7 @@ class PlayerCharacter(Character):
 					if self.current_health <= 0:
 						win = False
 						break
-				else: dialogue(f"It missed!")
+				else: dialogue("It missed!")
 				your_turn = True
 
 		if win:
@@ -295,11 +257,11 @@ class Item:
 
 		char.inventory.append(self)
 		dialogue(f"--- You have recieved {self} worth {self.value} gold, and it has been added to your inventory.\n")
-
-	def __repr__(self):
-		
-		return self.name
 	
+	def __repr__(self):
+
+		return self.name
+
 	def __str__(self):
 
 		return self.name
@@ -314,16 +276,38 @@ class Ability:
 		self.lvl = lvl
 		self.max_lvl = max_lvl
 		self.minimum_stat = minimum_stat
-	
+
 	def __repr__(self):
-		
+
 		return self.name
-	
+
 	def __str__(self):
 
 		return self.name
 
-class Area:
+class Location:
+
+	def __init__(self, name, visit_func):
+
+		self.visit_func = visit_func
+		self.name = name
+
+	def visit(self):
+
+		"""Used whenever the player visits the location"""
+
+		dialogue(f"--- You travel to {self}.")
+		self.visit_func()
+	
+	def __repr__(self):
+
+		return self.name
+
+	def __str__(self):
+
+		return self.name
+
+class Area(Location):
 
 	def __init__(self, name, locations):
 
@@ -359,38 +343,7 @@ class Area:
 			cls()
 			self.locations[choice - 1].visit()
 
-	def __repr__(self):
-
-		return self.name
-	
-	def __str__(self):
-
-		return self.name
-
-class Location:
-
-	def __init__(self, name, visit_func):
-
-		self.visit_func = visit_func
-		self.name = name
-
-	def visit(self):
-
-		"""Used whenever the player visits the location"""
-
-		dialogue(f"--- You travel to {self}.")
-		self.visit_func()
-
-	def __repr__(self):
-
-		return self.name
-	
-	def __str__(self):
-
-		return self.name
-
-
-class Shop:
+class Shop(Location):
 
 	def __init__(self, name, stock, greeting):
 
@@ -450,14 +403,6 @@ class Shop:
 			player.inventory.append(choice)
 			print(f"--- You bought a {choice} for {choice.value} gold.")
 
-	def __repr__(self):
-
-		return self.name
-	
-	def __str__(self):
-
-		return self.name
-
 class Slime(Character):
 
 	pass
@@ -490,7 +435,6 @@ king_story = [
 	"We have long waited for a courageous adventurer who would be worthy enough to venture into the depths of Asathryne and rescue us from this terror."]
 king_dialogue = False
 gates_dialogue = False
-gates_unlocked = False
 
 axe = Item("Axe", 10)
 staff = Item("Staff", 10)
@@ -508,29 +452,24 @@ sanctuary_apothecary = Shop(
 sanctuary_blacksmith = Shop(
 	name = "Sanctuary Blacksmith",
 	stock = [axe, staff, bow, sword],
-	greeting = "Hello there, traveller! You look like you could use some armor, and a reliable weapon, too. Step into my blacksmith shop and take a look at my many wares!")
+	greeting = "Hello there, traveller! You look like you could use a reliable weapon. Step into my shop and take a look at my many wares!")
 
 def sanctuary_gates_visit():
-	while True:
-		global gates_unlocked
-		if king_dialogue:
-			dialogue("Asathryne Gatekeeper: Halt there, young - ")
-			dialogue("Oh. You spoke with the King? I suppose my orders are to let you through then. Here, hand me the key.")
-			while True:
-				last_option = dialogue("1) Return to Sanctuary\n2) Go through the gates\n")
-				if last_option == "1":
-					dialogue("Very well. Return to the town square, and come back here when you are ready.")
-					return
-				elif last_option == "2":
-					player.item_remove(sanctuary_key)
-					dialogue("--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.")
-					gates_unlocked = True
-					dialogue("Good luck out there, traveller.")
-					sanctuary.locations[0] = forest_of_mysteries
-					return
-				else:
-					print("--- Invalid choice")
-		else: break
+	if king_dialogue:
+		dialogue("Asathryne Gatekeeper: Halt there, young - ")
+		dialogue("Oh. You spoke with the King? I suppose my orders are to let you through then. Here, hand me the key.")
+		while True:
+			last_option = dialogue("1) Return to Sanctuary\n2) Go through the gates\n")
+			if last_option == "1":
+				dialogue("Very well. Return to the town square, and come back here when you are ready.")
+				return
+			elif last_option == "2":
+				player.item_remove(sanctuary_key)
+				dialogue("--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.")
+				dialogue("Good luck out there, traveller.")
+				sanctuary.locations[0] = forest_of_mysteries
+				return
+			else: print("--- Invalid choice")
 	dialogue("Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!")
 	global gates_dialogue
 	gates_dialogue = True
@@ -625,25 +564,25 @@ forest_of_mysteries = Area("Forest of Mysteries", [sanctuary, forest_main])
 stun = Ability(
 	name = "Stun",
 	desc = "You swing with your weapon, with so much force that the enemy cannot use abilities for 2 turns.",
-	stat = "Strength",
+	stat = "strength",
 	minimum_stat = 8)
 
 fireball = Ability(
 	name = "Fireball",
 	desc = "You cast a fireball at your enemy, and on impact, it has a chance to burn the enemy.",
-	stat = "Intelligence",
+	stat = "intelligence",
 	minimum_stat = 8)
 
 sure_shot = Ability(
 	name = "Sure Shot",
 	desc = "You fire a well-aimed shot from your bow, which can't miss, and deals critical damage.",
-	stat = "Agility",
+	stat = "agility",
 	minimum_stat = 8)
 
 protection = Ability(
 	name = "Protection",
 	desc = "You summon a magical wall of protection, which prevents half of the damage dealt to you for 3 turns.",
-	stat = "Defence",
+	stat = "defence",
 	minimum_stat = 8)
 
 abilities = [stun, fireball, sure_shot, protection]
