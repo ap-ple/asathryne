@@ -34,6 +34,7 @@ class Character():
 		print(f"Intelligence - {self.intelligence}")
 		print(f"Agility - {self.agility}")
 		print(f"Defence - {self.defence}")
+		print(f"Weapon - {self.weap} ({self.weap.damage[0]}-{self.weap.damage[1]} damage)")
 		print(f"Abilities - {self.abilities}")
 		print(f"Inventory - {self.inventory}")
 		dialogue()
@@ -70,6 +71,7 @@ class PlayerCharacter(Character):
 		print(f"Intelligence - {self.intelligence}")
 		print(f"Agility - {self.agility}")
 		print(f"Defence - {self.defence}")
+		print(f"Weapon - {self.weap} ({self.weap.damage[0]}-{self.weap.damage[1]} damage)")
 		print(f"Abilities - {self.abilities}")
 		print(f"Inventory - {self.inventory}")
 		dialogue()
@@ -84,34 +86,23 @@ class PlayerCharacter(Character):
 			else: print("You must have have a name in this realm.")
 
 		while True:
-			class_pick = num_input("Choose a class.\n1) Warrior\n2) Sorcerer\n3) Ranger\n4) Paladin\n")
+			print("Choose a class.")
+			x = 1
+			for c in classes:
+				print(f"{x}) {c}")
+				x += 1
+			class_pick = num_input()
 			cls()
-			if class_pick == 1:
-				dialogue("--- You chose the warrior class, which favors Strength.\n- Courage, above all else, is the first quality of a warrior!\n")
-				self.class_type = "Warrior"
-				self.strength += 3
-				self.inventory.append(axe)
-				break
-			elif class_pick == 2:
-				dialogue("--- You chose the sorcerer class, which favors Intelligence.\n- The true sign of intelligence is not knowledge, but imagination.\n")
-				self.class_type = "Sorcerer"
-				self.intelligence += 3
-				self.inventory.append(staff)
-				break
-			elif class_pick == 3:
-				dialogue("--- You chose the ranger class, which favors Agility.\n- Accuracy comes with great discipline.\n")
-				self.class_type = "Ranger"
-				self.agility += 3
-				self.inventory.append(bow)
-				break
-			elif class_pick == 4:
-				dialogue("--- You chose the paladin class, which favors Defence.\n- To the righteous we bring hope.\n")
-				self.class_type = "Paladin"
-				self.defence += 3 
-				self.inventory.append(sword)
-				break
-			else:
-				print("--- Invalid choice")
+			x = 1
+			for c in classes:
+				if class_pick == x:
+					dialogue(f"--- You chose the {c} class, which favors {c.stat}.\n")
+					setattr(self, c.stat, getattr(self, c.stat) + 3)
+					self.class_type = c
+					self.inventory.append(c.weap)
+					return
+				x += 1
+			print("--- Invalid choice")
 
 	def equip(self, weapon):
 
@@ -248,6 +239,22 @@ class PlayerCharacter(Character):
 		else:
 			dialogue("You perished.")
 			return False
+
+class Class:
+
+	def __init__(self, name, stat, weap):
+
+		self.name = name
+		self.stat = stat
+		self.weap = weap
+
+	def __repr__(self):
+
+		return self.name
+
+	def __str__(self):
+
+		return self.name
 
 class Item:
 	
@@ -458,6 +465,12 @@ sanctuary_key = Item("Sanctuary Key", quest = True)
 pot_health = Item("Health Potion", 20)
 pot_mana = Item("Mana Potion", 20)
 
+warrior = Class("Warrior", "strength", axe)
+sorcerer = Class("Sorcerer", "intelligence", staff)
+ranger = Class("Ranger", "agility", bow)
+paladin = Class("Paladin", "defence", sword)
+classes = [warrior, sorcerer, ranger, paladin]
+
 sanctuary_apothecary = Shop(
 	name = "Sanctuary Apothecary",
 	stock = [pot_health, pot_mana],
@@ -626,7 +639,7 @@ def main():
 	else:
 		dialogue(f"Welcome to The Realm of Asathryne, {player}. A kingdom filled with adventure and danger, with much in store for those brave enough to explore it. Of course, nothing a {player.class_type} such as yourself can't handle.")
 		dialogue("Oh, of course! Allow me to introduce myself. My name is Kanron, your advisor.")
-		dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {player.class_type} needs a {player.inventory[0]}!")
+		dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {player.class_type} needs a {player.class_type.weap}!")
 		player.equip(player.inventory[0])
 		dialogue("Before you go venturing off into the depths of this realm, you must first master some basic skills.")
 		dialogue("Your stats determine your performance in battle, and the abilities you can learn.")
