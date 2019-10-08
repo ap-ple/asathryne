@@ -46,7 +46,6 @@ class Character():
 	def __str__(self):
 
 		return self.name
-
 class PlayerCharacter(Character):
 	
 	def __init__(self, name, class_type, health, mana, lvl, strength, intelligence, agility, defence, weap = '', abilities = [], inventory = [], gold = 0, xp = 0, abi_points = 0):
@@ -239,7 +238,6 @@ class PlayerCharacter(Character):
 		else:
 			dialogue("You perished.")
 			return False
-
 class Class:
 
 	def __init__(self, name, stat, weap):
@@ -255,7 +253,6 @@ class Class:
 	def __str__(self):
 
 		return self.name
-
 class Item:
 	
 	def __init__(self, name, value = 0, amount = 0, quest = False):
@@ -279,14 +276,12 @@ class Item:
 	def __str__(self):
 
 		return self.name
-
 class Weapon(Item):
 
 	def __init__(self, name, damage, value = 0, amount = 0, quest = False):
 
-		Item.__init__(self, name, value = 0, amount = 0)
+		Item.__init__(self, name, value, amount)
 		self.damage = damage
-
 class Ability:
 	
 	def __init__(self, name, desc, stat, minimum_stat, lvl = 0, max_lvl = 3):
@@ -305,7 +300,6 @@ class Ability:
 	def __str__(self):
 
 		return self.name
-
 class Location:
 
 	def __init__(self, name, visit_func):
@@ -327,7 +321,6 @@ class Location:
 	def __str__(self):
 
 		return self.name
-
 class Area(Location):
 
 	def __init__(self, name, locations):
@@ -363,7 +356,6 @@ class Area(Location):
 				continue
 			cls()
 			self.locations[choice - 1].visit()
-
 class Shop(Location):
 
 	def __init__(self, name, stock, greeting):
@@ -423,7 +415,6 @@ class Shop(Location):
 			player.gold -= choice.value
 			player.inventory.append(choice)
 			print(f"--- You bought a {choice} for {choice.value} gold.")
-
 class Slime(Character):
 
 	pass
@@ -439,6 +430,7 @@ agility - Determines the accuracy of the character's attacks, and how often they
 defence - Determines how much damage the character take from physical attacks
 abilities - list of abilities the character can use in battle
 inventory - list of items the character carries
+xp - how much xp gained when slain
 gold - currency carried by the character
 player character
 class - determines what stat you favor; underdeveloped as of current
@@ -475,7 +467,6 @@ sanctuary_apothecary = Shop(
 	name = "Sanctuary Apothecary",
 	stock = [pot_health, pot_mana],
 	greeting = "Welcome to the Apothecary! We have a variety of potions for sale. Take a look at what we have in stock.")
-
 sanctuary_blacksmith = Shop(
 	name = "Sanctuary Blacksmith",
 	stock = [axe, staff, bow, sword],
@@ -515,7 +506,6 @@ def sanctuary_gates_visit():
 			if gate_random == 1: dialogue("What are you waiting for? Go on!")
 			elif gate_random == 2: dialogue("Don't think standing here will convince me to open this gate.")
 			else: dialogue("Brand is waiting for you.")
-
 sanctuary_gates = Location("Sanctuary Gates", sanctuary_gates_visit)
 
 def sanctuary_kings_palace_visit():
@@ -568,7 +558,6 @@ def sanctuary_kings_palace_visit():
 			return
 		else:
 			print("--- Invalid choice")
-
 sanctuary_kings_palace = Location("Sanctuary King's Palace", sanctuary_kings_palace_visit)
 
 def forest_main_visit():
@@ -584,8 +573,8 @@ def forest_main_visit():
 		weap = Weapon("Slime", (30, 40)),
 		gold = randint(3, 6),
 		xp = randint(2, 3)))
-
 forest_main = Location("Forest Main", forest_main_visit)
+
 sanctuary = Area("Sanctuary", [sanctuary_gates, sanctuary_kings_palace, sanctuary_apothecary, sanctuary_blacksmith])
 forest_of_mysteries = Area("Forest of Mysteries", [sanctuary, forest_main])
 
@@ -594,25 +583,21 @@ stun = Ability(
 	desc = "You swing with your weapon, with so much force that the enemy cannot use abilities for 2 turns.",
 	stat = "strength",
 	minimum_stat = 8)
-
 fireball = Ability(
 	name = "Fireball",
 	desc = "You cast a fireball at your enemy, and on impact, it has a chance to burn the enemy.",
 	stat = "intelligence",
 	minimum_stat = 8)
-
 sure_shot = Ability(
 	name = "Sure Shot",
 	desc = "You fire a well-aimed shot from your bow, which can't miss, and deals critical damage.",
 	stat = "agility",
 	minimum_stat = 8)
-
 protection = Ability(
 	name = "Protection",
 	desc = "You summon a magical wall of protection, which prevents half of the damage dealt to you for 3 turns.",
 	stat = "defence",
 	minimum_stat = 8)
-
 abilities = [stun, fireball, sure_shot, protection]
 
 player = PlayerCharacter(
@@ -634,13 +619,13 @@ def main():
 	dialogue("Press enter to start.\n")
 	player.build_char()
 	if dialogue("--- Type 'skip' to skip the tutorial, or press enter to continue\n") == "skip":
-		player.equip(player.inventory[0])
+		player.equip(player.class_type.weap)
 		player.lvl_up()
 	else:
 		dialogue(f"Welcome to The Realm of Asathryne, {player}. A kingdom filled with adventure and danger, with much in store for those brave enough to explore it. Of course, nothing a {player.class_type} such as yourself can't handle.")
 		dialogue("Oh, of course! Allow me to introduce myself. My name is Kanron, your advisor.")
 		dialogue(f"You can't just go wandering off into Asathryne without a weapon. Every {player.class_type} needs a {player.class_type.weap}!")
-		player.equip(player.inventory[0])
+		player.equip(player.class_type.weap)
 		dialogue("Before you go venturing off into the depths of this realm, you must first master some basic skills.")
 		dialogue("Your stats determine your performance in battle, and the abilities you can learn.")
 		dialogue("There are 4 main stats: Strength, Intelligence, Agility, and Defense.")
@@ -663,5 +648,4 @@ def main():
 		player.lvl_up()
 		dialogue("Great job! Now that you have learned the basics, it is time you start your journey into the Realm of Asathryne.")
 	sanctuary.visit()
-
 if __name__ == "__main__": main()
