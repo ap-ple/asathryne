@@ -501,16 +501,9 @@ sanctuary_blacksmith = Shop(
 
 def sanctuary_gates_visit():
 	if player.progress['gates_unlocked']:
-		while True:
-			last_option = dialogue("1) Return to Sanctuary\n2) Go through the gates\n")
-			if last_option == "1":
-				return
-			elif last_option == "2":
-				forest_of_mysteries.visit()
-				return
-			else: 
-				print("--- Invalid choice")
-	if player.progress['king_dialogue']:
+		forest_of_mysteries.visit()
+		return
+	elif player.progress['king_dialogue']:
 		dialogue("Asathryne Gatekeeper: Halt there, young - ")
 		dialogue("Oh. You spoke with the King? I suppose my orders are to let you through then. Here, hand me the key.")
 		while True:
