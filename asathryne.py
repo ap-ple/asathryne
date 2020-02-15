@@ -2,7 +2,7 @@ from random import randint
 import os
 import simplejson
 from jsonpickle import encode, decode
-from stuff import *
+from stuff import cls, dialogue, num_input
 
 class Character():
 	
@@ -151,7 +151,7 @@ class PlayerCharacter(Character):
 			dialogue("--- There are no avaliable abilities to learn/upgrade.\n")
 			return False
 		while True:
-			print("--- Choose an ability to learn/upgrade.")
+			print(f"--- You have {len(ability_list)} abilities to learn/upgrade.")
 			x = 0
 			for abi in ability_list:
 				x += 1
@@ -476,6 +476,12 @@ king_story = [
 	"The horrid evil killed the emperor and kidnapped his daughter, our future princess. She was one of the most powerful beings in Asathryne.",
 	"But this was twenty years ago. Much longer ago, when we had a fighting chance against the dark forces.",
 	"We have long waited for a courageous adventurer who would be worthy enough to venture into the depths of Asathryne and rescue us from this terror."]
+'''Basically, the explanation for this goes as such:
+Princess is born to emperor, and they find out she's super magical and has immense powers.
+Emperor goes into deep cave. Or something. Or maybe some servant or adventerer goes. He discovers a book or something. The book contains dark magics.
+The emperor reads the book and becomes corrupted with the dark magics. He hears voices telling him to summon a bunch of dark creatures.
+He uses princess as a conduit to summon the army, fakes his own death, and travels to a mountain where nobody can find his daughter.
+Continues summoning army until they destroy asathryne.'''
 
 axe = Weapon("Axe", (25, 50), 10)
 staff = Weapon("Staff", (25, 30), 10)
@@ -517,6 +523,7 @@ def sanctuary_gates_visit():
 				dialogue("--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.")
 				dialogue("Good luck out there, traveller.")
 				player.progress['gates_unlocked'] = True
+				forest_of_mysteries.visit()
 				return
 			else: print("--- Invalid choice")
 	dialogue("Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!")
