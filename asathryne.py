@@ -1,6 +1,6 @@
 from random import randint
-import os
 import simplejson
+import os
 from jsonpickle import encode, decode
 from stuff import cls, dialogue, num_input
 
@@ -329,12 +329,12 @@ class Location:
 		self.visit_func = visit_func
 		self.name = name
 
-	def visit(self):
+	def visit(self, player):
 
 		"""Used whenever the player visits the location"""
 
 		dialogue(f"--- You travel to {self}.")
-		self.visit_func()
+		self.visit_func(player)
 	
 	def __repr__(self):
 
@@ -350,7 +350,7 @@ class Area(Location):
 		self.name = name
 		self.locations = locations
 
-	def visit(self):
+	def visit(self, player):
 
 		"""Used whenever the player visits the area"""
 		
@@ -385,7 +385,7 @@ class Area(Location):
 				print("--- Invalid choice")
 				continue
 			cls()
-			self.locations[choice - 1].visit()
+			self.locations[choice - 1].visit(player)
 class Shop(Location):
 
 	def __init__(self, name, stock, greeting):
@@ -394,7 +394,7 @@ class Shop(Location):
 		self.stock = stock
 		self.greeting = greeting
 
-	def visit(self):
+	def visit(self, player):
 
 		"""Used whenever the player visits the shop"""
 
@@ -506,9 +506,9 @@ sanctuary_blacksmith = Shop(
 	stock = [axe, staff, bow, sword],
 	greeting = "Hello there, traveller! You look like you could use a reliable weapon. Step into my shop and take a look at my many wares!")
 
-def sanctuary_gates_visit():
+def sanctuary_gates_visit(player):
 	if player.progress['gates_unlocked']:
-		forest_of_mysteries.visit()
+		forest_of_mysteries.visit(player)
 		return
 	elif player.progress['king_dialogue']:
 		dialogue("Asathryne Gatekeeper: Halt there, young - ")
@@ -523,7 +523,7 @@ def sanctuary_gates_visit():
 				dialogue("--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.")
 				dialogue("Good luck out there, traveller.")
 				player.progress['gates_unlocked'] = True
-				forest_of_mysteries.visit()
+				forest_of_mysteries.visit(player)
 				return
 			else: print("--- Invalid choice")
 	dialogue("Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!")
@@ -531,7 +531,7 @@ def sanctuary_gates_visit():
 	while True:
 		option_gate = dialogue("Type 'go' to go meet King Brand, or 'exit' to return to the town square.\n").lower()
 		if option_gate == "go":
-			sanctuary_kings_palace.visit()
+			sanctuary_kings_palace.visit(player)
 			return
 		elif option_gate == "exit":
 			cls()
@@ -545,7 +545,7 @@ def sanctuary_gates_visit():
 			else: dialogue("Brand is waiting for you.")
 sanctuary_gates = Location("Sanctuary Gates", sanctuary_gates_visit)
 
-def sanctuary_kings_palace_visit():
+def sanctuary_kings_palace_visit(player):
 	if player.progress['king_dialogue']:
 		dialogue("King Brand: Hello, young traveller.")
 		while True:
@@ -597,7 +597,7 @@ def sanctuary_kings_palace_visit():
 			print("--- Invalid choice")
 sanctuary_kings_palace = Location("Sanctuary King's Palace", sanctuary_kings_palace_visit)
 
-def forest_main_visit():
+def forest_main_visit(player):
 	player.combat(Slime(
 		name = "Green Slime",
 		health = 50,
@@ -638,7 +638,6 @@ protection = Ability(
 abilities = [stun, fireball, sure_shot, protection]
 
 def main():
-	global player
 	cls()
 	while True:
 		print(">>> Asathryne <<<")
@@ -688,7 +687,7 @@ def main():
 				dialogue("Let's upgrade your stats. For your class, you recieve an extra 3 skill points in the stat that your class favors, and you will recieve 1 level up.")
 				player.lvl_up()
 				dialogue("Great job! Now that you have learned the basics, it is time you start your journey into the Realm of Asathryne.")
-			sanctuary.visit()
+			sanctuary.visit(player)
 		elif choice == 2:
 			saves = []
 			directory = os.fsencode(os.getcwd())
@@ -711,7 +710,7 @@ def main():
 					print("--- Invalid choice")
 					continue
 				player = saves[choice - 1] 
-				player.progress['area'].visit()
+				player.progress['area'].visit(player)
 		elif choice == 0 or choice > 2:
 			print('--- Invalid choice')
 if __name__ == "__main__": main()
