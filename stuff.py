@@ -1,7 +1,7 @@
-from os import system
+import os
 
 #a shorter version of system('cls')
-def cls(): system("cls" if name == "nt" else "clear")
+def cls(): os.system("cls" if os.name == "nt" else "clear")
 
 #Like input, but only accepts numbers; returns number in integer form, or 0 if the input is not a number
 def num_input(string=""):
