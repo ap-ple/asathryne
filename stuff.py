@@ -1,7 +1,7 @@
 from os import system
 
 #a shorter version of system('cls')
-def cls(): system('cls')
+def cls(): system("cls" if name == "nt" else "clear")
 
 #Like input, but only accepts numbers; returns number in integer form, or 0 if the input is not a number
 def num_input(string=""):
@@ -9,7 +9,7 @@ def num_input(string=""):
   if x.isdigit(): return int(x)
   else: return 0
 
-#Like input, but clears after the input is taken; commonly used as dialogue
+#Like input, but clears after the input is taken
 def dialogue(string=""):
   x = input(string)
   cls()
@@ -24,8 +24,14 @@ def radical(num):
           num /= (n ** 2)
           numlist.append(n)
           break
-      else: break
+      else:
+        break
     newnum = 1
-    for n in numlist: newnum *= n
-    if newnum == 1: return f"√{int(num)}"
-    else: return f"{newnum}√{int(num)}"
+    for n in numlist:
+    	newnum *= n
+    if newnum == 1:
+    	return f"√{int(num)}"
+    elif num == 1:
+      return newnum
+    else:
+    	return f"{newnum}√{int(num)}"
