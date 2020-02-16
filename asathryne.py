@@ -528,7 +528,7 @@ def sanctuary_gates_visit(player):
 				return
 			else: print("--- Invalid choice")
 	dialogue("Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!")
-	player.progress['gates_dialogue']
+	player.progress['gates_dialogue'] = True
 	while True:
 		option_gate = dialogue("Type 'go' to go meet King Brand, or 'exit' to return to the town square.\n").lower()
 		if option_gate == "go":
@@ -701,11 +701,9 @@ def main():
 				print('No saves found')
 				continue
 			while True:
-				x = 0
 				print('Choose your character.')
-				for s in saves:
-					x += 1
-					print(f'{x}) {s.name} - Level {s.lvl} {s.class_type}')
+				for i, s in enumerate(saves):
+					print(f'{i + 1}) {s.name} - Level {s.lvl} {s.class_type}')
 				choice = num_input()
 				cls()
 				if choice <= 0 or choice > len(saves):
