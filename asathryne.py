@@ -51,12 +51,12 @@ class Character():
 		return self.name
 class PlayerCharacter(Character):
 	
-	def __init__(self, name, class_type, health, mana, lvl, strength, intelligence, agility, defence, weap = '', abilities = [], inventory = [], gold = 0, xp = 0, abi_points = 0):
+	def __init__(self, name, class_type, health, mana, lvl, strength, intelligence, agility, defence, weap = '', abilities = [], inventory = [], gold = 0, xp = 0):
 
 		Character.__init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, weap, xp, abilities, inventory, gold)
 		self.progress = {'area': '', 'king_dialogue': False, 'gates_dialogue': False, 'gates_unlocked': False}
 		self.class_type = class_type
-		self.abi_points = abi_points
+		self.abi_points = 0
 
 	def view_stats(self):
 
@@ -440,7 +440,7 @@ class Slime(Character):
 
 	pass
 
-"""
+'''
 character
 health - How much damage the character can take before they perish
 mana - Determines the character's use of abilities
@@ -457,7 +457,7 @@ player character
 class - determines what stat you favor; underdeveloped as of current
 xp - Gain XP in battle; when you have enough, you will go up one level and you will get to use your skill points.
 abi_points - If the player cannot learn abilities at the moment, they will recieve an ability point to use for later.
-"""
+'''
 
 king_story = (
 	"Very well. Go ahead and take a seat.",
@@ -467,12 +467,14 @@ king_story = (
 	"The horrid evil killed the emperor and kidnapped his daughter, our future princess. She was one of the most powerful beings in Asathryne.",
 	"But this was twenty years ago. Much longer ago, when we had a fighting chance against the dark forces.",
 	"We have long waited for a courageous adventurer who would be worthy enough to venture into the depths of Asathryne and rescue us from this terror.")
-'''Basically, the explanation for this goes as such:
+'''
+Basically, here's how it goes:
 Princess is born to emperor, and they find out she's super magical and has immense powers.
 Emperor goes into deep cave. Or something. Or maybe some servant or adventerer goes. He discovers a book or something. The book contains dark magics.
 The emperor reads the book and becomes corrupted with the dark magics. He hears voices telling him to summon a bunch of dark creatures.
 He uses princess as a conduit to summon the army, fakes his own death, and travels to a mountain where nobody can find his daughter.
-Continues summoning army until they destroy asathryne.'''
+Continues summoning army until they destroy asathryne.
+'''
 
 axe = Weapon("Axe", (25, 50), 10)
 staff = Weapon("Staff", (25, 30), 10)
