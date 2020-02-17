@@ -85,26 +85,24 @@ class PlayerCharacter(Character):
 
 		while True:
 			self.name = dialogue("What is your name, traveller?\n")
-			if self.name != "": break
-			else: print("You must have have a name in this realm.")
+			if self.name != "":
+				break
+			else: 
+				print("You must have have a name in this realm.")
 
 		while True:
 			print("Choose a class.")
-			x = 1
-			for c in classes:
-				print(f"{x}) {c}")
-				x += 1
+			for i, c in enumerate(classes):
+				print(f"{i + 1}) {c}")
 			class_pick = num_input()
 			cls()
-			x = 1
-			for c in classes:
-				if class_pick == x:
+			for i, c in enumerate(classes):
+				if class_pick == i + 1:
 					dialogue(f"--- You chose the {c} class, which favors {c.stat}.\n")
 					setattr(self, c.stat, getattr(self, c.stat) + 3)
 					self.class_type = c
 					self.inventory.append(c.weap)
 					return
-				x += 1
 			print("--- Invalid choice")
 
 	def equip(self, weapon):
@@ -152,19 +150,15 @@ class PlayerCharacter(Character):
 			return False
 		while True:
 			print(f"--- You have {len(ability_list)} abilities to learn/upgrade.")
-			x = 0
-			for abi in ability_list:
-				x += 1
-				print(f"{x}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}")
+			for i, abi in enumerate(ability_list):
+				print(f"{i + 1}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}")
 			choice = num_input()
 			cls()
-			if choice > x or choice == 0:
+			if choice > len(ability_list) or choice == 0:
 				print("--- Invalid choice")
 				continue
-			x = 0
-			for abi in ability_list:
-				x += 1
-				if choice == x:
+			for i, abi in enumerate(ability_list):
+				if choice == i + 1:
 					if abi.lvl == 0: 
 						dialogue(f"--- You have learned {abi}.\n")
 						self.abilities.append(abi)
@@ -194,9 +188,11 @@ class PlayerCharacter(Character):
 					points -= upgrade
 					setattr(self, stat, current_stat + upgrade)
 					cls()
-					if points == 0:	break
+					if points == 0:	
+						break
 			while self.abi_points > 0:
-				if not self.learn_ability(): break
+				if not self.learn_ability(): 
+					break
 
 	def save(self):
 
@@ -234,8 +230,10 @@ class PlayerCharacter(Character):
 						if enemy.current_health <= 0:
 							win = True
 							break
-					else: dialogue("You missed!")
-				elif choice == 2: dialogue("You passed.")
+					else: 
+						dialogue("You missed!")
+				elif choice == 2: 
+					dialogue("You passed.")
 				else:
 					print("--- Invalid choice")
 					continue
@@ -244,13 +242,15 @@ class PlayerCharacter(Character):
 				dialogue(f"{enemy} attacks!")
 				if randint(1, 100) < (enemy.agility / (enemy.agility + self.agility)) * 100:
 					damage = int(enemy.strength / (enemy.strength + self.defence) * randint(*enemy.weap.damage))
-					if damage < 0: damage = 0
+					if damage < 0: 
+						damage = 0
 					dialogue(f"{enemy} hit you for {damage} damage!")
 					self.current_health -= damage
 					if self.current_health <= 0:
 						win = False
 						break
-				else: dialogue("It missed!")
+				else: 
+					dialogue("It missed!")
 				your_turn = True
 
 		if win:
@@ -359,16 +359,12 @@ class Area(Location):
 		dialogue(f"--- You travel to {self}.")
 		while True:
 			print(self)
-			x = 1
-			for l in self.locations:
-				print(f"{x}) {l}")
-				x += 1
-			print(f"{x}) View Character")
-			x += 1
-			print(f"{x}) Save")
+			for i, l in enumerate(self.locations):
+				print(f"{i + 1}) {l}")
+			print(f"{len(self.locations) + 1}) View Character")
+			print(f"{len(self.locations) + 2}) Save")
 			if player.xp >= (player.lvl + 2) ** 2:
-				x += 1
-				print(f"{x}) Level up!")
+				print(f"{len(self.locations) + 3}) Level up!")
 			choice = num_input()
 			if choice == len(self.locations) + 1: 
 				player.view_stats()
@@ -381,7 +377,7 @@ class Area(Location):
 			elif choice == len(self.locations) + 3 and player.xp >= (player.lvl + 2) ** 2: 
 				player.lvl_up()
 				continue
-			elif choice <= 0 or choice > len(self.locations):
+			elif choice > len(self.locations) or choice <= 0:
 				cls()
 				print("--- Invalid choice")
 				continue
@@ -403,31 +399,24 @@ class Shop(Location):
 		dialogue(self.greeting)
 		while True:
 			print(f"--- You have {player.gold} gold.")
-			x = 1
-			for i in self.stock:
-				print(f"{x}) {i} - {i.value} gold")
-				x += 1
-			print(f"{x}) Sell items")
-			x += 1
-			print(f"{x}) Leave")
+			for i, item in enumerate(self.stock):
+				print(f"{i + 1}) {item} - {item.value} gold")
+			print(f"{len(self.stock) + 1}) Sell items")
+			print(f"{len(self.stock) + 2}) Leave")
 			choice = num_input()
 			cls()
 			if choice == len(self.stock) + 1:
 				while True:
 					print(f"--- You have {player.gold} gold.")
-					x = 1
-					choice_inv = player.inventory
-					for i in choice_inv:
-						if i.quest:
-							choice_inv.remove(i)
-					for i in choice_inv:
-						print(f"{x}) {i} - {int(i.value * 0.8)} gold")
-						x += 1
-					print(f"{x}) Back")
+					choice_inv = [i for i in player.inventory if not i.quest]
+					for i, item in enumerate(choice_inv):
+						print(f"{i + 1}) {item} - {int(item.value * 0.8)} gold")
+					print(f"{len(choice_inv) + 1}) Back")
 					choice = num_input()
 					cls()
-					if choice == len(choice_inv) + 1: break
-					if choice <= 0 or choice > x:
+					if choice == len(choice_inv) + 1:
+						break
+					elif choice > len(choice_inv) or choice <= 0:
 						print("--- Invalid choice")
 						continue
 					choice = choice_inv[choice - 1]
@@ -435,8 +424,9 @@ class Shop(Location):
 					player.inventory.remove(choice)
 					print(f"--- You sold a {choice} for {int(choice.value * 0.8)} gold.")
 				continue
-			if choice == len(self.stock) + 2: return
-			if choice <= 0 or choice > x:
+			elif choice == len(self.stock) + 2: 
+				return
+			elif choice > len(self.stock) or choice <= 0:
 				print("--- Invalid choice")
 				continue
 			choice = self.stock[choice - 1]
@@ -469,14 +459,14 @@ xp - Gain XP in battle; when you have enough, you will go up one level and you w
 abi_points - If the player cannot learn abilities at the moment, they will recieve an ability point to use for later.
 """
 
-king_story = [
+king_story = (
 	"Very well. Go ahead and take a seat.",
 	"Now, Asathryne once was a kingdom filled with happiness and peace, ruled by Emperor Verandus.",
 	"Until one day, an evil never before seen, arrived in Asathryne and tore the realm apart, leaving nothing but a barren wasteland.",
 	"Sanctuary became the only thriving town left in the land.",
 	"The horrid evil killed the emperor and kidnapped his daughter, our future princess. She was one of the most powerful beings in Asathryne.",
 	"But this was twenty years ago. Much longer ago, when we had a fighting chance against the dark forces.",
-	"We have long waited for a courageous adventurer who would be worthy enough to venture into the depths of Asathryne and rescue us from this terror."]
+	"We have long waited for a courageous adventurer who would be worthy enough to venture into the depths of Asathryne and rescue us from this terror.")
 '''Basically, the explanation for this goes as such:
 Princess is born to emperor, and they find out she's super magical and has immense powers.
 Emperor goes into deep cave. Or something. Or maybe some servant or adventerer goes. He discovers a book or something. The book contains dark magics.
@@ -526,7 +516,8 @@ def sanctuary_gates_visit(player):
 				player.progress['gates_unlocked'] = True
 				forest_of_mysteries.visit(player)
 				return
-			else: print("--- Invalid choice")
+			else: 
+				print("--- Invalid choice")
 	dialogue("Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!")
 	player.progress['gates_dialogue'] = True
 	while True:
@@ -541,9 +532,12 @@ def sanctuary_gates_visit(player):
 		else:
 			cls()
 			gate_random = randint(1, 3)
-			if gate_random == 1: dialogue("What are you waiting for? Go on!")
-			elif gate_random == 2: dialogue("Don't think standing here will convince me to open this gate.")
-			else: dialogue("Brand is waiting for you.")
+			if gate_random == 1: 
+				dialogue("What are you waiting for? Go on!")
+			elif gate_random == 2: 
+				dialogue("Don't think standing here will convince me to open this gate.")
+			else: 
+				dialogue("Brand is waiting for you.")
 sanctuary_gates = Location("Sanctuary Gates", sanctuary_gates_visit)
 
 def sanctuary_kings_palace_visit(player):
@@ -562,8 +556,10 @@ def sanctuary_kings_palace_visit(player):
 	dialogue(f"King Brand: At last, a brave {player.class_type} has arisen once more in this kingdom, here on a quest to save the kingdom of Asathryne from the dark evil that lies beyond the gates.")
 	dialogue("Tell me young traveller, what do you seek from me?")
 	while True:
-		if player.progress['gates_dialogue']: option_1 = dialogue("1) I'm here to learn about Asathryne\n2) The gate keeper has sent me to meet you\n")
-		else: option_1 = dialogue("1) I'm here to learn about Asathryne\n")
+		if player.progress['gates_dialogue']: 
+			option_1 = dialogue("1) I'm here to learn about Asathryne\n2) The gate keeper has sent me to meet you\n")
+		else: 
+			option_1 = dialogue("1) I'm here to learn about Asathryne\n")
 		if option_1 == "1":
 			for s in king_story: 
 				dialogue(s)
@@ -680,8 +676,10 @@ def main():
 						dialogue("Your mana determines your use of abilities.")
 						dialogue("Your health determines how much damage you can take before you perish.")
 						break
-					elif learn_more == 'n': break
-					else: print("--- Invalid choice")
+					elif learn_more == 'n': 
+						break
+					else: 
+						print("--- Invalid choice")
 				dialogue("Let's talk about your level.")
 				dialogue("Your level represents how powerful you are, and determines the level of your enemies; when you go up a level, you will recieve 3 skill points to spend on any of the 4 stats, and 1 ability point to learn/upgrade abilities. Additionally, your health and mana will automatically increase.")
 				dialogue("You can gain XP (experience points) in battle; when you have enough, you'll go up one level and get to use your skill points.")
