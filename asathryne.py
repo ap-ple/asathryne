@@ -406,6 +406,9 @@ class Shop(Location):
 			choice = num_input()
 			cls()
 			if choice == len(self.stock) + 1:
+				if player.inventory == []:
+					print('--- error: inventory empty')
+					continue
 				while True:
 					print(f"--- You have {player.gold} gold.")
 					choice_inv = [i for i in player.inventory if not i.quest]
