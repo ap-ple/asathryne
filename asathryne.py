@@ -53,7 +53,7 @@ class PlayerCharacter(Character):
 	
 	def __init__(self, name, class_type, health, mana, lvl, strength, intelligence, agility, defence, weap = '', abilities = [], inventory = [], gold = 0, xp = 0):
 
-		Character.__init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, weap, xp, abilities, inventory, gold)
+		super().__init__(name, health, mana, lvl, strength, intelligence, agility, defence, weap, xp, abilities, inventory, gold)
 		self.progress = {'area': '', 'king_dialogue': False, 'gates_dialogue': False, 'gates_unlocked': False}
 		self.class_type = class_type
 		self.abi_points = 0
@@ -143,7 +143,7 @@ class PlayerCharacter(Character):
 					if self.abilities == []:
 						ability_list.append(abi)
 					else:
-						if check_ab(abi, self.abilities):
+						if all(a.name != abi.name for a in self.abilities):
 							ability_list.append(abi)
 		if ability_list == []:
 			dialogue('--- There are no avaliable abilities to learn/upgrade.\n')
@@ -303,7 +303,7 @@ class Weapon(Item):
 
 	def __init__(self, name, damage, value = 0, amount = 0, quest = False):
 
-		Item.__init__(self, name, value, amount)
+		super().__init__(name, value, amount)
 		self.damage = damage
 class Ability:
 	
@@ -715,4 +715,5 @@ def main():
 				player.progress['area'].visit(player)
 		elif choice == 0 or choice > 2:
 			print('--- Invalid choice')
-if __name__ == '__main__': main()
+if __name__ == '__main__': 
+	main()
