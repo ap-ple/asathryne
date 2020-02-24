@@ -92,12 +92,12 @@ class PlayerCharacter(Character):
 
 		while True:
 			print('Choose a class.')
-			for i, c in enumerate(classes):
-				print(f'{i + 1}) {c}')
+			for i, c in enumerate(classes, 1):
+				print(f'{i}) {c}')
 			class_pick = num_input()
 			cls()
-			for i, c in enumerate(classes):
-				if class_pick == i + 1:
+			for i, c in enumerate(classes, 1):
+				if class_pick == i:
 					dialogue(f'--- You chose the {c} class, which favors {c.stat}.\n')
 					setattr(self, c.stat, getattr(self, c.stat) + 3)
 					self.class_type = c
@@ -150,15 +150,15 @@ class PlayerCharacter(Character):
 			return False
 		while True:
 			print(f'--- You have {len(ability_list)} abilities to learn/upgrade.')
-			for i, abi in enumerate(ability_list):
-				print(f'{i + 1}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
+			for i, abi in enumerate(ability_list, 1):
+				print(f'{i}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
 			choice = num_input()
 			cls()
 			if choice > len(ability_list) or choice == 0:
 				print('--- Invalid choice')
 				continue
-			for i, abi in enumerate(ability_list):
-				if choice == i + 1:
+			for i, abi in enumerate(ability_list, 1):
+				if choice == i:
 					if abi.lvl == 0: 
 						dialogue(f'--- You have learned {abi}.\n')
 						self.abilities.append(abi)
@@ -359,8 +359,8 @@ class Area(Location):
 		dialogue(f'--- You travel to {self}.')
 		while True:
 			print(self)
-			for i, l in enumerate(self.locations):
-				print(f'{i + 1}) {l}')
+			for i, l in enumerate(self.locations, 1):
+				print(f'{i}) {l}')
 			print(f'{len(self.locations) + 1}) View Character')
 			print(f'{len(self.locations) + 2}) Save')
 			if player.xp >= (player.lvl + 2) ** 2:
@@ -399,8 +399,8 @@ class Shop(Location):
 		dialogue(self.greeting)
 		while True:
 			print(f'--- You have {player.gold} gold.')
-			for i, item in enumerate(self.stock):
-				print(f'{i + 1}) {item} - {item.value} gold')
+			for i, item in enumerate(self.stock, 1):
+				print(f'{i}) {item} - {item.value} gold')
 			print(f'{len(self.stock) + 1}) Sell items')
 			print(f'{len(self.stock) + 2}) Leave')
 			choice = num_input()
@@ -412,8 +412,8 @@ class Shop(Location):
 				while True:
 					print(f'--- You have {player.gold} gold.')
 					choice_inv = [i for i in player.inventory if not i.quest]
-					for i, item in enumerate(choice_inv):
-						print(f'{i + 1}) {item} - {int(item.value * 0.8)} gold')
+					for i, item in enumerate(choice_inv, 1):
+						print(f'{i}) {item} - {int(item.value * 0.8)} gold')
 					print(f'{len(choice_inv) + 1}) Back')
 					choice = num_input()
 					cls()
@@ -704,8 +704,8 @@ def main():
 				continue
 			while True:
 				print('Choose your character.')
-				for i, s in enumerate(saves):
-					print(f'{i + 1}) {s.name} - Level {s.lvl} {s.class_type}')
+				for i, s in enumerate(saves, 1):
+					print(f'{i}) {s.name} - Level {s.lvl} {s.class_type}')
 				choice = num_input()
 				cls()
 				if choice <= 0 or choice > len(saves):
