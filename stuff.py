@@ -19,19 +19,19 @@ def dialogue(string=""):
 def radical(num):
     numlist = []
     while True: 
-      for n in range(2, 999):
-        if num % (n ** 2) == 0:
-          num /= (n ** 2)
-          numlist.append(n)
-          break
-      else:
-        break
+        for n in range(2, 999):
+            if num % (n ** 2) == 0:
+                num /= (n ** 2)
+                numlist.append(n)
+                break
+        else:
+            break
     newnum = 1
     for n in numlist:
-      newnum *= n
+        newnum *= n
     if newnum == 1:
-      return f"√{int(num)}"
+        return f"√{int(num)}"
     elif num == 1:
-      return newnum
+        return newnum
     else:
-      return f"{newnum}√{int(num)}"
+        return f"{newnum}√{int(num)}"
