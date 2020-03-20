@@ -42,6 +42,25 @@ class Character():
 		print(f'Inventory - {self.inventory}')
 		dialogue()
 
+	def attack(self, enemy, damage_multiplier = 1, accuracy_multiplier = 1):
+
+		'''Sets the basic attack for all characters; expanded upon through abilities'''
+
+		class Attack:
+
+			def __init__(self, hit, damage):
+
+				self.hit = hit
+				self.damage = damage
+
+		if randint(1, 100) < (self.agility / (self.agility + enemy.agility)) * 100 * accuracy_multiplier:
+			hit = True
+			damage = int(self.strength / (self.strength + enemy.defence) * randint(*self.weap.damage) * damage_multiplier)
+		else:
+			hit = False
+			damage = 0
+		return Attack(hit, damage)
+
 	def __repr__(self):
 
 		return self.name
@@ -92,12 +111,12 @@ class PlayerCharacter(Character):
 
 		while True:
 			print('Choose a class.')
-			for i, c in enumerate(classes):
-				print(f'{i + 1}) {c}')
+			for i, c in enumerate(classes, 1):
+				print(f'{i}) {c}')
 			class_pick = num_input()
 			clear()
-			for i, c in enumerate(classes):
-				if class_pick == i + 1:
+			for i, c in enumerate(classes, 1):
+				if class_pick == i:
 					dialogue(f'--- You chose the {c} class, which favors {c.stat}.\n')
 					setattr(self, c.stat, getattr(self, c.stat) + 3)
 					self.class_type = c
@@ -130,40 +149,35 @@ class PlayerCharacter(Character):
 
 		'''Used whenever the player character can learn a new ability; only used in lvl_up as of current'''
 
-		def check_ab(abi, abl):
-			for a in abl:
-				if a.name == abi.name:
-					return False
-			return True
-
-		ability_list = [abi for abi in self.abilities if abi.max_lvl > abi.lvl]
+		ability_list = [abi for abi in self.abilities if abi.max_lvl > abi.lvl and abi.check(self)]
 		for abi in abilities: 
-			for stat in ['strength', 'intelligence', 'agility', 'defence']: 
-				if abi.stat == stat and getattr(self, stat) >= abi.minimum_stat:
-					if self.abilities == []:
+			if abi.check(self):
+				if self.abilities == []:
+					ability_list.append(abi)
+				else:
+					if all(a.name != abi.name for a in self.abilities):
 						ability_list.append(abi)
-					else:
-						if all(a.name != abi.name for a in self.abilities):
-							ability_list.append(abi)
 		if ability_list == []:
 			dialogue('--- There are no avaliable abilities to learn/upgrade.\n')
 			return False
 		while True:
 			print(f'--- You have {len(ability_list)} abilities to learn/upgrade.')
-			for i, abi in enumerate(ability_list):
-				print(f'{i + 1}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
+			for i, abi in enumerate(ability_list, 1):
+				print(f'{i}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
 			choice = num_input()
 			clear()
 			if choice > len(ability_list) or choice == 0:
 				print('--- Invalid choice')
 				continue
-			for i, abi in enumerate(ability_list):
-				if choice == i + 1:
+			for i, abi in enumerate(ability_list, 1):
+				if choice == i:
 					if abi.lvl == 0: 
 						dialogue(f'--- You have learned {abi}.\n')
 						self.abilities.append(abi)
-					else: dialogue(f'--- You have upgraded {abi}.\n')
-					abi.lvl += 1
+						abi.upgrade()
+					else: 
+						dialogue(f'--- You have upgraded {abi}.\n')
+						abi.upgrade()					
 					self.abi_points -= 1
 					return True
 
@@ -207,9 +221,11 @@ class PlayerCharacter(Character):
 
 		self.current_health = self.health
 		self.current_mana = self.mana
+		self.status = {}
 
 		enemy.current_health = enemy.health
 		enemy.current_mana = enemy.mana
+		enemy.status = {}
 
 		dialogue(f'You encountered {enemy}!')
 		your_turn = True
@@ -218,21 +234,64 @@ class PlayerCharacter(Character):
 				print(f'{self}\nHealth - {self.current_health}/{self.health}\nMana - {self.current_mana}/{self.mana}\n')
 				print(f'{enemy}\nHealth - {enemy.current_health}/{enemy.health}\nMana - {enemy.current_mana}/{enemy.mana}\n')
 				print('1) Attack')
-				print('2) Pass')
+				print('2) Abilities')
+				print('3) Pass')
 				choice = num_input()
 				clear()
 				if choice == 1:
 					dialogue('You attack with your weapon!')
-					if randint(1, 100) < (self.agility / (self.agility + enemy.agility)) * 100:
-						damage = int(self.strength / (self.strength + enemy.defence) * randint(*self.weap.damage))
-						dialogue(f'You hit {enemy} for {damage} damage!')
-						enemy.current_health -= damage
-						if enemy.current_health <= 0:
-							win = True
-							break
+					attack = self.attack(enemy)
+					if attack.hit:
+						dialogue(f'You hit {enemy} for {attack.damage} damage!')
+						enemy.current_health -= attack.damage						
 					else: 
 						dialogue('You missed!')
 				elif choice == 2: 
+					back = False
+					while True:
+						print('Abilities')
+						ability_list = [abi for abi in self.abilities if abi.active]
+						for i, abi in enumerate(ability_list, 1):
+							print(f'{i}) {abi} ({abi.cost} mana): {abi.desc}')
+						print(f'{len(ability_list) + 1}) Back')
+						choice = num_input()
+						clear()
+						if choice == len(ability_list) + 1:
+							back = True
+							break
+						elif choice > len(ability_list) or choice <= 0:
+							print('--- Invalid choice')
+							continue
+						ability = ability_list[choice - 1]
+						if ability.cost > self.current_mana:
+							print('--- Not enough mana')
+							continue
+						while True:
+							print('Choose a target.')
+							if ability.target == 'enemy':
+								targets = [enemy]
+							elif ability.target == 'ally':
+								targets = [self]
+							elif ability.target == 'all_enemy':
+								pass
+							elif ability.target == 'all_ally':
+								pass
+							elif ability.target == 'all':
+								pass
+							for i, char in enumerate(targets, 1):
+								print(f'{i}) {char}')
+							choice = num_input()
+							clear()
+							if choice > len(ability_list) or choice <= 0:
+								print('--- Invalid choice')
+								continue
+							target = targets[choice - 1]
+							self, target = ability.use(self, target)
+							break
+						break
+					if back:
+						continue
+				elif choice == 3:
 					dialogue('You passed.')
 				else:
 					print('--- Invalid choice')
@@ -240,27 +299,26 @@ class PlayerCharacter(Character):
 				your_turn = False
 			else:
 				dialogue(f'{enemy} attacks!')
-				if randint(1, 100) < (enemy.agility / (enemy.agility + self.agility)) * 100:
-					damage = int(enemy.strength / (enemy.strength + self.defence) * randint(*enemy.weap.damage))
-					if damage < 0: 
-						damage = 0
-					dialogue(f'{enemy} hit you for {damage} damage!')
-					self.current_health -= damage
-					if self.current_health <= 0:
-						win = False
-						break
+				attack = enemy.attack(self)
+				if attack.hit:
+					dialogue(f'{enemy} hit you for {attack.damage} damage!')
+					self.current_health -= attack.damage
 				else: 
 					dialogue('It missed!')
 				your_turn = True
-
+			if enemy.current_health <= 0:
+				win = True
+				break
+			if self.current_health <= 0:
+				win = False
+				break
 		if win:
 			dialogue(f'You defeated {enemy}, and gained {enemy.xp} xp and {enemy.gold} gold!')
 			self.xp += enemy.xp
 			self.gold += enemy.gold
-			return True
 		else:
 			dialogue('You perished.')
-			return False
+		return win
 class Class:
 
 	def __init__(self, name, stat, weap):
@@ -307,14 +365,16 @@ class Weapon(Item):
 		self.damage = damage
 class Ability:
 	
-	def __init__(self, name, desc, stat, minimum_stat, lvl = 0, max_lvl = 3):
+	def __init__(self, name, desc, stat, cost, active, target):
 		
 		self.name = name
 		self.desc = desc
 		self.stat = stat
-		self.lvl = lvl
-		self.max_lvl = max_lvl
-		self.minimum_stat = minimum_stat
+		self.cost = cost
+		self.active = active
+		self.target = target
+		self.lvl = 0
+		self.max_lvl = 3
 
 	def __repr__(self):
 
@@ -359,8 +419,8 @@ class Area(Location):
 		dialogue(f'--- You travel to {self}.')
 		while True:
 			print(self)
-			for i, l in enumerate(self.locations):
-				print(f'{i + 1}) {l}')
+			for i, l in enumerate(self.locations, 1):
+				print(f'{i}) {l}')
 			print(f'{len(self.locations) + 1}) View Character')
 			print(f'{len(self.locations) + 2}) Save')
 			if player.xp >= (player.lvl + 2) ** 2:
@@ -399,8 +459,8 @@ class Shop(Location):
 		dialogue(self.greeting)
 		while True:
 			print(f'--- You have {player.gold} gold.')
-			for i, item in enumerate(self.stock):
-				print(f'{i + 1}) {item} - {item.value} gold')
+			for i, item in enumerate(self.stock, 1):
+				print(f'{i}) {item} - {item.value} gold')
 			print(f'{len(self.stock) + 1}) Sell items')
 			print(f'{len(self.stock) + 2}) Leave')
 			choice = num_input()
@@ -412,8 +472,8 @@ class Shop(Location):
 				while True:
 					print(f'--- You have {player.gold} gold.')
 					choice_inv = [i for i in player.inventory if not i.quest]
-					for i, item in enumerate(choice_inv):
-						print(f'{i + 1}) {item} - {int(item.value * 0.8)} gold')
+					for i, item in enumerate(choice_inv, 1):
+						print(f'{i}) {item} - {int(item.value * 0.8)} gold')
 					print(f'{len(choice_inv) + 1}) Back')
 					choice = num_input()
 					clear()
@@ -614,30 +674,168 @@ def forest_main_visit(player):
 		xp = randint(2, 3)))
 forest_main = Location('Forest Main', forest_main_visit)
 
-sanctuary = Area('Sanctuary', [sanctuary_gates, sanctuary_kings_palace, sanctuary_apothecary, sanctuary_blacksmith])
-forest_of_mysteries = Area('Forest of Mysteries', [sanctuary, forest_main])
+sanctuary = Area('Sanctuary', (sanctuary_gates, sanctuary_kings_palace, sanctuary_apothecary, sanctuary_blacksmith))
+forest_of_mysteries = Area('Forest of Mysteries', (sanctuary, forest_main))
 
-stun = Ability(
-	name = 'Stun',
-	desc = 'You swing with your weapon, with so much force that the enemy cannot use abilities for 2 turns.',
-	stat = 'strength',
-	minimum_stat = 8)
-fireball = Ability(
-	name = 'Fireball',
-	desc = 'You cast a fireball at your enemy, and on impact, it has a chance to burn the enemy.',
-	stat = 'intelligence',
-	minimum_stat = 8)
-sure_shot = Ability(
-	name = 'Sure Shot',
-	desc = 'You fire a well-aimed shot from your bow, which can\'t miss, and deals critical damage.',
-	stat = 'agility',
-	minimum_stat = 8)
-protection = Ability(
-	name = 'Protection',
-	desc = 'You summon a magical wall of protection, which prevents half of the damage dealt to you for 3 turns.',
-	stat = 'defence',
-	minimum_stat = 8)
-abilities = [stun, fireball, sure_shot, protection]
+class Stun(Ability):
+
+	def __init__(self):
+		
+		super().__init__(
+			name = 'Stun',
+			desc = 'You swing your weapon, stunning target enemy for a duration.',
+			stat = 'strength',
+			cost = 40,
+			active = True,
+			target = 'enemy')
+		self.damage_lvl = {1: 1.2, 2: 1.4, 3: 1.5}
+		self.duration_lvl = {1: 1, 2: 1, 3: 2}
+
+	def upgrade(self):
+
+		'''Levels up this ability, increasing its level and other stats'''
+
+		self.lvl += 1
+		self.damage = self.damage_lvl[self.lvl]
+		self.duration = self.duration_lvl[self.lvl]
+
+	def check(self, user):
+
+		'''Checks if player is eligible to learn/upgrade this ability'''
+
+		levels = {0: 8, 1: 13, 2: 20}
+		if getattr(user, self.stat) >= levels[self.lvl]:
+			return True
+		return False
+
+	def use(self, user, target):
+
+		dialogue(f'{user} uses {self} on {target}!')
+		attack = user.attack(target, damage_multiplier = self.damage, accuracy_multiplier = 0.9)
+		if attack.hit:
+			dialogue(f'{user} deals {attack.damage} damage and stuns {target} for {self.duration} turn!')
+			target.status['stun'] = self.duration
+		else:
+			dialogue(f'{user} missed!')
+		return (user, target)
+
+class Fireball(Ability):
+
+	def __init__(self):
+		
+		super().__init__(
+			name = 'Fireball',
+			desc = 'You hurl a fireball at target enemy, dealing damage.',
+			stat = 'intelligence',
+			cost = 10,
+			active = True,
+			target = 'enemy')
+		self.damage_lvl = {1: 4, 2: 7, 3: 10}
+
+	def upgrade(self):
+
+		'''Levels up this ability, increasing its level and other stats'''
+
+		self.lvl += 1
+		self.damage = self.damage_lvl[self.lvl]
+
+	def check(self, user):
+
+		'''Checks if player is eligible to learn/upgrade this ability'''
+
+		levels = {0: 8, 1: 13, 2: 20}
+		if getattr(user, self.stat) >= levels[self.lvl]:
+			return True
+		return False
+
+	def use(self, user, target):
+
+		dialogue(f'{user} uses {self} on {target}!')
+		damage = self.damage * user.intelligence
+		dialogue(f'The fireball burns {target} dealing {damage} damage!')
+		target.current_health -= damage
+		return (user, target)
+
+class SureShot(Ability):
+
+	def __init__(self):
+		
+		super().__init__(
+			name = 'Sure Shot',
+			desc = 'You fire a well-aimed shot from your bow at target enemy, more damaging and accurate than a normal attack.',
+			stat = 'agility',
+			cost = 15,
+			active = True,
+			target = 'enemy')
+		self.damage_lvl = {1: 1.3, 2: 1.5, 3: 1.7}
+		self.accuracy_lvl = {1: 1.5, 2: 1.5, 3: 2}
+
+	def upgrade(self):
+
+		'''Levels up this ability, increasing its level and other stats'''
+
+		self.lvl += 1
+		self.damage = self.damage_lvl[self.lvl]
+		self.accuracy = self.accuracy_lvl[self.lvl]
+
+	def check(self, user):
+
+		'''Checks if player is eligible to learn/upgrade this ability'''
+
+		levels = {0: 8, 1: 13, 2: 20}
+		if getattr(user, self.stat) >= levels[self.lvl]:
+			return True
+		return False
+
+	def use(self, user, target):
+
+		dialogue(f'{user} uses {self} on {target}!')
+		attack = user.attack(target, damage_multiplier = self.damage, accuracy_multiplier = self.accuracy)
+		if attack.hit:
+			dialogue(f'{user} deals {attack.damage} damage to {target}!')
+		else:
+			dialogue(f'{user} missed!')
+		return (user, target)
+
+class Protection(Ability):
+
+	def __init__(self):
+		
+		super().__init__(
+			name = 'Protection',
+			desc = 'You summon a magical wall of protection, which prevents a percentage of damage dealt to target ally for a duration.',
+			stat = 'defence',
+			cost = 30,
+			active = True,
+			target = 'ally')
+		self.resistance_lvl = {1: 1.3, 2: 1.5, 3: 1.6}
+		self.duration_lvl = {1: 2, 2: 2, 3: 3}
+
+	def upgrade(self):
+
+		'''Levels up this ability, increasing its level and other stats'''
+
+		self.lvl += 1
+		self.resistance = self.resistance_lvl[self.lvl]
+		self.duration = self.duration_lvl[self.lvl]
+
+	def check(self, user):
+
+		'''Checks if player is eligible to learn/upgrade this ability'''
+
+		levels = {0: 8, 1: 13, 2: 20}
+		if getattr(user, self.stat) >= levels[self.lvl]:
+			return True
+		return False
+
+	def use(self, user, target):
+
+		dialogue(f'{user} uses {self} on {target}!')
+		target.status['resistance'] = [self.resistance, self.duration]
+		dialogue(f'{target}\'s resistance has been increased for {self.duration} turns!')
+		return (user, target)
+
+abilities = [Stun(), Fireball(), SureShot(), Protection()]
 
 def main():
 	clear()
@@ -704,8 +902,8 @@ def main():
 				continue
 			while True:
 				print('Choose your character.')
-				for i, s in enumerate(saves):
-					print(f'{i + 1}) {s.name} - Level {s.lvl} {s.class_type}')
+				for i, s in enumerate(saves, 1):
+					print(f'{i}) {s.name} - Level {s.lvl} {s.class_type}')
 				choice = num_input()
 				clear()
 				if choice <= 0 or choice > len(saves):
@@ -713,7 +911,7 @@ def main():
 					continue
 				player = saves[choice - 1] 
 				player.progress['area'].visit(player)
-		elif choice == 0 or choice > 2:
+		else:
 			print('--- Invalid choice')
 if __name__ == '__main__': 
 	main()
