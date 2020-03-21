@@ -4,9 +4,11 @@ import os
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input
 
+version = '0.0.1'
+
 class Character():
 	
-	def __init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, weap, xp, abilities = [], inventory = [], gold = 0):
+	def __init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, xp, gold, weap, abilities = [], inventory = []):
 
 		self.name = name 
 		self.health = health
@@ -16,11 +18,11 @@ class Character():
 		self.intelligence = intelligence
 		self.agility = agility
 		self.defence = defence
+		self.xp = xp
+		self.gold = gold
 		self.weap = weap
 		self.abilities = abilities
 		self.inventory = inventory
-		self.gold = gold
-		self.xp = xp
 
 	def view_stats(self):
 
@@ -42,7 +44,7 @@ class Character():
 		print(f'Inventory - {self.inventory}')
 		dialogue()
 
-	def attack(self, enemy, damage_multiplier = 1, accuracy_multiplier = 1):
+	def attack(self, target, damage_multiplier = 1, accuracy_multiplier = 1):
 
 		'''Sets the basic attack for all characters; expanded upon through abilities'''
 
@@ -53,9 +55,9 @@ class Character():
 				self.hit = hit
 				self.damage = damage
 
-		if randint(1, 100) < (self.agility / (self.agility + enemy.agility)) * 100 * accuracy_multiplier:
+		if randint(1, 100) < (self.agility / (self.agility + target.agility)) * 100 * accuracy_multiplier:
 			hit = True
-			damage = int(self.strength / (self.strength + enemy.defence) * randint(*self.weap.damage) * damage_multiplier)
+			damage = int(self.strength / (self.strength + target.defence) * randint(*self.weap.damage) * damage_multiplier)
 		else:
 			hit = False
 			damage = 0
@@ -68,13 +70,14 @@ class Character():
 	def __str__(self):
 
 		return self.name
+
 class PlayerCharacter(Character):
 	
-	def __init__(self, name, class_type, health, mana, lvl, strength, intelligence, agility, defence, weap = '', abilities = [], inventory = [], gold = 0, xp = 0):
+	def __init__(self):
 
-		super().__init__(name, health, mana, lvl, strength, intelligence, agility, defence, weap, xp, abilities, inventory, gold)
+		super().__init__(name = '', health = 50, mana = 25, lvl = 0, strength = 5, intelligence = 5, agility = 5, defence = 5, xp = 4, gold = 50, weap = '')
 		self.progress = {'area': '', 'king_dialogue': False, 'gates_dialogue': False, 'gates_unlocked': False}
-		self.class_type = class_type
+		self.class_type = ''
 		self.abi_points = 0
 
 	def view_stats(self):
@@ -191,6 +194,8 @@ class PlayerCharacter(Character):
 			self.lvl += 1
 			self.health += 50
 			self.mana += 25
+			self.current_health = self.health
+			self.current_mana = self.mana
 			self.abi_points += 1
 			dialogue(f'--- You have leveled up to level {self.lvl}! Your power increases.\n')
 			points = 3
@@ -219,8 +224,6 @@ class PlayerCharacter(Character):
 
 		'''Used whenever the player enters combat'''
 
-		self.current_health = self.health
-		self.current_mana = self.mana
 		self.status = {}
 
 		enemy.current_health = enemy.health
@@ -333,6 +336,7 @@ class PlayerCharacter(Character):
 		else:
 			dialogue('You perished.')
 		return win
+
 class Class:
 
 	def __init__(self, name, stat, weap):
@@ -348,6 +352,7 @@ class Class:
 	def __str__(self):
 
 		return self.name
+
 class Item:
 	
 	def __init__(self, name, value = 0, amount = 0, quest = False):
@@ -371,12 +376,14 @@ class Item:
 	def __str__(self):
 
 		return self.name
+
 class Weapon(Item):
 
 	def __init__(self, name, damage, value = 0, amount = 0, quest = False):
 
 		super().__init__(name, value, amount)
 		self.damage = damage
+
 class Ability:
 	
 	def __init__(self, name, desc, stat, cost, active, target):
@@ -397,6 +404,7 @@ class Ability:
 	def __str__(self):
 
 		return self.name
+
 class Location:
 
 	def __init__(self, name, visit_func):
@@ -418,18 +426,23 @@ class Location:
 	def __str__(self):
 
 		return self.name
+
 class Area(Location):
 
-	def __init__(self, name, locations):
+	def __init__(self, name, locations, safe):
 
 		self.name = name
 		self.locations = locations
+		self.safe = safe
 
 	def visit(self, player):
 
 		'''Used whenever the player visits the area'''
 		
 		player.progress['area'] = self
+		if self.safe:
+			player.current_health = player.health
+			player.current_mana = player.mana
 		dialogue(f'--- You travel to {self}.')
 		while True:
 			print(self)
@@ -457,6 +470,7 @@ class Area(Location):
 				continue
 			clear()
 			self.locations[choice - 1].visit(player)
+
 class Shop(Location):
 
 	def __init__(self, name, stock, greeting):
@@ -513,6 +527,7 @@ class Shop(Location):
 			player.gold -= choice.value
 			player.inventory.append(choice)
 			print(f'--- You bought a {choice} for {choice.value} gold.')
+
 class Slime(Character):
 
 	pass
@@ -681,15 +696,15 @@ def forest_main_visit(player):
 		lvl = 1,
 		strength = 3,
 		intelligence = 0,
-		agility = 2,
+		agility = 4,
 		defence = 2,
 		weap = Weapon('Slime', (30, 40)),
 		gold = randint(3, 6),
 		xp = randint(2, 3)))
 forest_main = Location('Forest Main', forest_main_visit)
 
-sanctuary = Area('Sanctuary', (sanctuary_gates, sanctuary_kings_palace, sanctuary_apothecary, sanctuary_blacksmith))
-forest_of_mysteries = Area('Forest of Mysteries', (sanctuary, forest_main))
+sanctuary = Area('Sanctuary', (sanctuary_gates, sanctuary_kings_palace, sanctuary_apothecary, sanctuary_blacksmith), True)
+forest_of_mysteries = Area('Forest of Mysteries', (sanctuary, forest_main), False)
 
 class Stun(Ability):
 
@@ -703,7 +718,6 @@ class Stun(Ability):
 			active = True,
 			target = 'enemy')
 		
-
 	def upgrade(self):
 
 		'''Levels up this ability, increasing its level and other stats'''
@@ -846,33 +860,22 @@ abilities = [Stun(), Fireball(), SureShot(), Protection()]
 def main():
 	clear()
 	while True:
-		print('>>> Asathryne <<<')
+		print(f'>>> Asathryne <<< v{version}')
 		print('1) New game\n2) Load game')
 		choice = num_input()
 		clear()
 		if choice == 1:
-			bugs = ('Stun will deal damage, but not stun.', 'Protection does nothing. At all.', 'Potions are currently unusable.', 'Weapons cannot be equipped/unequipped')
+			bugs = ('Stun deals damage but does not stun', 'Protection has no effect', 'Potions are unusable', 'Weapons cannot be equipped/unequipped')
 			if dialogue('Before the game begins, I want to thank you for playing this beta version of the game!') != 'skip':
 				dialogue('The reason I\'m probably having you play this is because I really need help with developing this game.')
 				dialogue('All I ask of you is to provide any and all feedback and suggestions that you have for me.')
 				dialogue('If possible, I\'m also looking for people who are good at creative writing and worldbuilding to help me develop story!')
-				print('One more thing, here are a couple non-bugs in this version:')
+				print('One more thing, here are a couple bugs in this version. If you run into something not on this list, please report it.')
 				for bug in bugs:
 					print(bug)
 				dialogue()
 				dialogue('Thanks so much, and I hope you enjoy!')
-			player = PlayerCharacter(
-				name = '',
-				class_type = '',
-				health = 50,
-				mana = 25,
-				lvl = 0,
-				strength = 5,
-				intelligence = 5,
-				agility = 5,
-				defence = 5,
-				xp = 4,
-				gold = 50)
+			player = PlayerCharacter()
 			player.build_char()
 			if dialogue('--- Type \'skip\' to skip the tutorial, or press enter to continue\n') == 'skip':
 				player.equip(player.class_type.weap)
