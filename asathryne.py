@@ -239,11 +239,23 @@ class PlayerCharacter(Character):
 				choice = num_input()
 				clear()
 				if choice == 1:
-					dialogue('You attack with your weapon!')
-					attack = self.attack(enemy)
+					while True:
+						print('Choose a target.')
+						targets = [enemy]
+						for i, char in enumerate(targets, 1):
+							print(f'{i}) {char}')
+						choice = num_input()
+						clear()
+						if choice > len(targets) or choice <= 0:
+							print('--- Invalid choice')
+							continue
+						target = targets[choice - 1]
+						break
+					dialogue(f'You attack {target} with your weapon!')
+					attack = self.attack(target)
 					if attack.hit:
-						dialogue(f'You hit {enemy} for {attack.damage} damage!')
-						enemy.current_health -= attack.damage						
+						dialogue(f'You hit {target} for {attack.damage} damage!')
+						target.current_health -= attack.damage						
 					else: 
 						dialogue('You missed!')
 				elif choice == 2: 
@@ -282,7 +294,7 @@ class PlayerCharacter(Character):
 								print(f'{i}) {char}')
 							choice = num_input()
 							clear()
-							if choice > len(ability_list) or choice <= 0:
+							if choice > len(targets) or choice <= 0:
 								print('--- Invalid choice')
 								continue
 							target = targets[choice - 1]
