@@ -702,23 +702,21 @@ class Stun(Ability):
 			cost = 40,
 			active = True,
 			target = 'enemy')
-		self.damage_lvl = {1: 1.2, 2: 1.4, 3: 1.5}
-		self.duration_lvl = {1: 1, 2: 1, 3: 2}
+		
 
 	def upgrade(self):
 
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = self.damage_lvl.get(self.lvl)
-		self.duration = self.duration_lvl.get(self.lvl)
+		self.damage = {1: 1.2, 2: 1.4, 3: 1.5}.get(self.lvl)
+		self.duration = {1: 1, 2: 1, 3: 2}.get(self.lvl)
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		levels = {0: 8, 1: 13, 2: 20}
-		if getattr(user, self.stat) >= levels.get(self.lvl):
+		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}.get(self.lvl):
 			return True
 		return False
 
@@ -745,21 +743,19 @@ class Fireball(Ability):
 			cost = 10,
 			active = True,
 			target = 'enemy')
-		self.damage_lvl = {1: 4, 2: 7, 3: 10}
 
 	def upgrade(self):
 
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = self.damage_lvl.get(self.lvl)
+		self.damage = {1: 4, 2: 7, 3: 10}.get(self.lvl)
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		levels = {0: 8, 1: 13, 2: 20}
-		if getattr(user, self.stat) >= levels.get(self.lvl):
+		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}.get(self.lvl):
 			return True
 		return False
 
@@ -782,23 +778,20 @@ class SureShot(Ability):
 			cost = 15,
 			active = True,
 			target = 'enemy')
-		self.damage_lvl = {1: 1.3, 2: 1.5, 3: 1.7}
-		self.accuracy_lvl = {1: 1.5, 2: 1.5, 3: 2}
-
+		
 	def upgrade(self):
 
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = self.damage_lvl.get(self.lvl)
-		self.accuracy = self.accuracy_lvl.get(self.lvl)
+		self.damage = {1: 1.3, 2: 1.5, 3: 1.7}.get(self.lvl)
+		self.accuracy = {1: 1.5, 2: 1.5, 3: 2}.get(self.lvl)
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		levels = {0: 8, 1: 13, 2: 20}
-		if getattr(user, self.stat) >= levels.get(self.lvl):
+		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}.get(self.lvl):
 			return True
 		return False
 
@@ -824,23 +817,20 @@ class Protection(Ability):
 			cost = 30,
 			active = True,
 			target = 'ally')
-		self.resistance_lvl = {1: 1.3, 2: 1.5, 3: 1.6}
-		self.duration_lvl = {1: 2, 2: 2, 3: 3}
 
 	def upgrade(self):
 
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.resistance = self.resistance_lvl.get(self.lvl)
-		self.duration = self.duration_lvl.get(self.lvl)
+		self.resistance = {1: 1.3, 2: 1.5, 3: 1.6}.get(self.lvl)
+		self.duration = {1: 2, 2: 2, 3: 3}.get(self.lvl)
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		levels = {0: 8, 1: 13, 2: 20}
-		if getattr(user, self.stat) >= levels.get(self.lvl):
+		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}.get(self.lvl):
 			return True
 		return False
 
@@ -861,12 +851,12 @@ def main():
 		choice = num_input()
 		clear()
 		if choice == 1:
-			bugs = ('Stun will deal damage, but not stun.', 'Protection does nothing. At all.', 'Potions are currently unusable.')
+			bugs = ('Stun will deal damage, but not stun.', 'Protection does nothing. At all.', 'Potions are currently unusable.', 'Weapons cannot be equipped/unequipped')
 			if dialogue('Before the game begins, I want to thank you for playing this beta version of the game!') != 'skip':
 				dialogue('The reason I\'m probably having you play this is because I really need help with developing this game.')
 				dialogue('All I ask of you is to provide any and all feedback and suggestions that you have for me.')
 				dialogue('If possible, I\'m also looking for people who are good at creative writing and worldbuilding to help me develop story!')
-				print('One more thing, here are a couple known bugs in this version:')
+				print('One more thing, here are a couple non-bugs in this version:')
 				for bug in bugs:
 					print(bug)
 				dialogue()
