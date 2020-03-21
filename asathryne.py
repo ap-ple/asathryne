@@ -166,7 +166,7 @@ class PlayerCharacter(Character):
 				print(f'{i}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
 			choice = num_input()
 			clear()
-			if choice > len(ability_list) or choice == 0:
+			if choice > len(ability_list) or choice <= 0:
 				print('--- Invalid choice')
 				continue
 			for i, abi in enumerate(ability_list, 1):
@@ -860,6 +860,16 @@ def main():
 		choice = num_input()
 		clear()
 		if choice == 1:
+			bugs = ('Stun will deal damage, but not stun.', 'Protection does nothing. At all.', 'Potions are currently unusable.')
+			if dialogue('Before the game begins, I want to thank you for playing this beta version of the game!') != 'skip':
+				dialogue('The reason I\'m probably having you play this is because I really need help with developing this game.')
+				dialogue('All I ask of you is to provide any and all feedback and suggestions that you have for me.')
+				dialogue('If possible, I\'m also looking for people who are good at creative writing and worldbuilding to help me develop story!')
+				print('One more thing, here are a couple known bugs in this version:')
+				for bug in bugs:
+					print(bug)
+				dialogue()
+				dialogue('Thanks so much, and I hope you enjoy!')
 			player = PlayerCharacter(
 				name = '',
 				class_type = '',
