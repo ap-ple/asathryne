@@ -287,6 +287,7 @@ class PlayerCharacter(Character):
 								continue
 							target = targets[choice - 1]
 							self, target = ability.use(self, target)
+							self.current_mana -= ability.cost
 							break
 						break
 					if back:
@@ -714,6 +715,7 @@ class Stun(Ability):
 		attack = user.attack(target, damage_multiplier = self.damage, accuracy_multiplier = 0.9)
 		if attack.hit:
 			dialogue(f'{user} deals {attack.damage} damage and stuns {target} for {self.duration} turn!')
+			target.current_health -= attack.damage
 			target.status['stun'] = self.duration
 		else:
 			dialogue(f'{user} missed!')
@@ -793,6 +795,7 @@ class SureShot(Ability):
 		attack = user.attack(target, damage_multiplier = self.damage, accuracy_multiplier = self.accuracy)
 		if attack.hit:
 			dialogue(f'{user} deals {attack.damage} damage to {target}!')
+			target.current_health -= attack.damage
 		else:
 			dialogue(f'{user} missed!')
 		return (user, target)
