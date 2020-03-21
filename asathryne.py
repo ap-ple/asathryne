@@ -278,29 +278,30 @@ class PlayerCharacter(Character):
 						if ability.cost > self.current_mana:
 							print('--- Not enough mana')
 							continue
-						while True:
-							print('Choose a target.')
-							if ability.target == 'enemy':
-								targets = [enemy]
-							elif ability.target == 'ally':
-								targets = [self]
-							elif ability.target == 'all_enemy':
-								pass
-							elif ability.target == 'all_ally':
-								pass
-							elif ability.target == 'all':
-								pass
-							for i, char in enumerate(targets, 1):
-								print(f'{i}) {char}')
-							choice = num_input()
-							clear()
-							if choice > len(targets) or choice <= 0:
-								print('--- Invalid choice')
-								continue
-							target = targets[choice - 1]
-							self, target = ability.use(self, target)
-							self.current_mana -= ability.cost
-							break
+						if ability.target == 'enemy' or ability.target == 'ally':
+							while True:
+								print('Choose a target.')
+								if ability.target == 'enemy':
+									targets = [enemy]
+								else:
+									targets = [self]
+								for i, char in enumerate(targets, 1):
+									print(f'{i}) {char}')
+								choice = num_input()
+								clear()
+								if choice > len(targets) or choice <= 0:
+									print('--- Invalid choice')
+									continue
+								target = targets[choice - 1]
+								self, target = ability.use(self, target)
+								self.current_mana -= ability.cost
+								break
+						elif ability.target == 'all_enemy':
+							pass
+						elif ability.target == 'all_ally':
+							pass
+						elif ability.target == 'all':
+							pass
 						break
 					if back:
 						continue
@@ -709,15 +710,15 @@ class Stun(Ability):
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = self.damage_lvl[self.lvl]
-		self.duration = self.duration_lvl[self.lvl]
+		self.damage = self.damage_lvl.get(self.lvl)
+		self.duration = self.duration_lvl.get(self.lvl)
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
 		levels = {0: 8, 1: 13, 2: 20}
-		if getattr(user, self.stat) >= levels[self.lvl]:
+		if getattr(user, self.stat) >= levels.get(self.lvl):
 			return True
 		return False
 
@@ -751,14 +752,14 @@ class Fireball(Ability):
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = self.damage_lvl[self.lvl]
+		self.damage = self.damage_lvl.get(self.lvl)
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
 		levels = {0: 8, 1: 13, 2: 20}
-		if getattr(user, self.stat) >= levels[self.lvl]:
+		if getattr(user, self.stat) >= levels.get(self.lvl):
 			return True
 		return False
 
@@ -789,15 +790,15 @@ class SureShot(Ability):
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = self.damage_lvl[self.lvl]
-		self.accuracy = self.accuracy_lvl[self.lvl]
+		self.damage = self.damage_lvl.get(self.lvl)
+		self.accuracy = self.accuracy_lvl.get(self.lvl)
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
 		levels = {0: 8, 1: 13, 2: 20}
-		if getattr(user, self.stat) >= levels[self.lvl]:
+		if getattr(user, self.stat) >= levels.get(self.lvl):
 			return True
 		return False
 
@@ -831,15 +832,15 @@ class Protection(Ability):
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.resistance = self.resistance_lvl[self.lvl]
-		self.duration = self.duration_lvl[self.lvl]
+		self.resistance = self.resistance_lvl.get(self.lvl)
+		self.duration = self.duration_lvl.get(self.lvl)
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
 		levels = {0: 8, 1: 13, 2: 20}
-		if getattr(user, self.stat) >= levels[self.lvl]:
+		if getattr(user, self.stat) >= levels.get(self.lvl):
 			return True
 		return False
 
