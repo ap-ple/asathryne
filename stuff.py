@@ -15,6 +15,18 @@ def dialogue(string=""):
     clear()
     return x
 
+#Asks the user to choose from a list; returns the number chosen
+def choose(prompt, choices, error = '--- Invalid choice'):
+    while True:
+        print(prompt)
+        for i, c in enumerate(choices, 1):
+            print(f'{i}) {c}')
+        choice = num_input()
+        clear()
+        if choice > len(choices) or choice <= 0:
+            print(error)
+        return choice
+
 #returns a string of the simplest radical form of the square root of a number
 def radical(num):
     numlist = []
