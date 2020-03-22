@@ -25,6 +25,7 @@ def choose(prompt, choices, error = '--- Invalid choice'):
         clear()
         if choice > len(choices) or choice <= 0:
             print(error)
+            continue
         return choice
 
 #returns a string of the simplest radical form of the square root of a number
