@@ -4,7 +4,37 @@ import os
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input
 
-version = '0.0.1'
+version = '0.0.2'
+bugs = (
+'Stun deals damage but does not stun',
+'Protection has no effect', 
+'Potions are unusable', 
+'Weapons cannot be equipped/unequipped')
+
+'''
+Roadmap
+
+now:
+multiple enemies/ally based combat
+status effects for combat
+choices function, replace all current choice loops with this (maybe not)
+revamp items
+	- active items
+	- equipping weapons
+	- item requirements like classes, eg bows for rangers
+revamp classes
+	- subclasses
+
+later:
+add followers/allies
+add more abilities 
+	- use global targeting like all, all_ally, all_enemy
+	- use passives and actives
+outsource creative writing and worldbuilding
+multiplayer?
+	- pvp
+	- co-op
+'''
 
 class Character():
 	
@@ -865,16 +895,15 @@ def main():
 		choice = num_input()
 		clear()
 		if choice == 1:
-			bugs = ('Stun deals damage but does not stun', 'Protection has no effect', 'Potions are unusable', 'Weapons cannot be equipped/unequipped')
-			if dialogue('Before the game begins, I want to thank you for playing this beta version of the game!') != 'skip':
-				dialogue('The reason I\'m probably having you play this is because I really need help with developing this game.')
-				dialogue('All I ask of you is to provide any and all feedback and suggestions that you have for me.')
-				dialogue('If possible, I\'m also looking for people who are good at creative writing and worldbuilding to help me develop story!')
-				print('One more thing, here are a couple bugs in this version. If you run into something not on this list, please report it.')
-				for bug in bugs:
-					print(bug)
-				dialogue()
-				dialogue('Thanks so much, and I hope you enjoy!')
+			dialogue('Before the game begins, I want to thank you for playing this beta version of the game!')
+			dialogue('The reason I\'m probably having you play this is because I really need help with developing this game.')
+			dialogue('All I ask of you is to provide any and all feedback and suggestions that you have for me.')
+			dialogue('If possible, I\'m also looking for people who are good at creative writing and worldbuilding to help me develop story!')
+			print('One more thing, here are a couple known bugs in this version. If you run into something not on this list, please report it.')
+			for bug in bugs:
+				print(f' - {bug}')
+			dialogue()
+			dialogue('Thanks so much, and I hope you enjoy!')
 			player = PlayerCharacter()
 			player.build_char()
 			if dialogue('--- Type \'skip\' to skip the tutorial, or press enter to continue\n') == 'skip':
