@@ -4,7 +4,7 @@ import os
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input, choose
 
-version = '0.1.2'
+version = '0.1.3'
 bugs = (
 'Stun deals damage but does not stun',
 'Protection has no effect', 
@@ -150,21 +150,10 @@ class PlayerCharacter(Character):
 				break
 			else: 
 				print('You must have have a name in this realm.')
-
-		while True:
-			print('Choose a class.')
-			for i, c in enumerate(classes, 1):
-				print(f'{i}) {c}')
-			class_pick = num_input()
-			clear()
-			for i, c in enumerate(classes, 1):
-				if class_pick == i:
-					dialogue(f'--- You chose the {c} class, which favors {c.stat}.\n')
-					setattr(self, c.stat, getattr(self, c.stat) + 3)
-					self.class_type = c
-					self.inventory.append(c.weap)
-					return
-			print('--- Invalid choice')
+		self.class_type = classes[choose('Choose a class.', classes) - 1]
+		dialogue(f'--- You chose the {self.class_type} class, which favors {self.class_type.stat}.')
+		setattr(self, self.class_type.stat, getattr(self, self.class_type.stat) + 3)
+		self.inventory.append(self.class_type.weap)
 
 	def equip(self, weapon):
 
@@ -273,26 +262,12 @@ class PlayerCharacter(Character):
 		your_turn = True
 		while True:
 			if your_turn:
-				print(f'{self}\nHealth - {self.current_health}/{self.health}\nMana - {self.current_mana}/{self.mana}\n')
-				print(f'{enemy}\nHealth - {enemy.current_health}/{enemy.health}\nMana - {enemy.current_mana}/{enemy.mana}\n')
-				print('1) Attack')
-				print('2) Abilities')
-				print('3) Pass')
-				choice = num_input()
-				clear()
+				self_info = f'{self}\nHealth - {self.current_health}/{self.health}\nMana - {self.current_mana}/{self.mana}\n'
+				enemy_info = f'{enemy}\nHealth - {enemy.current_health}/{enemy.health}\nMana - {enemy.current_mana}/{enemy.mana}\n'
+				choice = choose(f'{self_info}\n{enemy_info}', ('Attack', 'Abilities', 'Pass'))
 				if choice == 1:
-					while True:
-						print('Choose a target.')
-						targets = [enemy]
-						for i, char in enumerate(targets, 1):
-							print(f'{i}) {char}')
-						choice = num_input()
-						clear()
-						if choice > len(targets) or choice <= 0:
-							print('--- Invalid choice')
-							continue
-						target = targets[choice - 1]
-						break
+					targets = [enemy]
+					target = targets[choose('Choose a target.', targets) - 1]
 					dialogue(f'You attack {target} with your weapon!')
 					attack = self.attack(target)
 					if attack.hit:
@@ -321,23 +296,13 @@ class PlayerCharacter(Character):
 							print('--- Not enough mana')
 							continue
 						if ability.target == 'enemy' or ability.target == 'ally':
-							while True:
-								print('Choose a target.')
-								if ability.target == 'enemy':
-									targets = [enemy]
-								else:
-									targets = [self]
-								for i, char in enumerate(targets, 1):
-									print(f'{i}) {char}')
-								choice = num_input()
-								clear()
-								if choice > len(targets) or choice <= 0:
-									print('--- Invalid choice')
-									continue
-								target = targets[choice - 1]
-								ability.use(self, target)
-								self.current_mana -= ability.cost
-								break
+							if ability.target == 'enemy':
+								targets = [enemy]
+							else:
+								targets = [self]
+							target = targets[choose('Choose a target.', targets) - 1]
+							ability.use(self, target)
+							self.current_mana -= ability.cost
 						elif ability.target == 'all_enemy':
 							pass
 						elif ability.target == 'all_ally':
@@ -349,15 +314,12 @@ class PlayerCharacter(Character):
 						continue
 				elif choice == 3:
 					dialogue('You passed.')
-				else:
-					print('--- Invalid choice')
-					continue
 				your_turn = False
 			else:
 				dialogue(f'{enemy} attacks!')
 				attack = enemy.attack(self)
 				if attack.hit:
-					dialogue(f'{enemy} hit you for {attack.damage} damage!')
+					dialogue(f'{enemy} hit {self} for {attack.damage} damage!')
 					self.current_health -= attack.damage
 				else: 
 					dialogue('It missed!')
@@ -641,6 +603,7 @@ def sanctuary_gates_visit(player):
 			('Return to Sanctuary', 'Unlock the gates'))
 		if choice == 1:
 			dialogue('Asathryne Gatekeeper: Very well. Return to the town square, and come back here when you are ready.')
+			dialogue('--- You return to the town square.')
 			return
 		else:
 			player.item_remove(sanctuary_key)
@@ -665,9 +628,7 @@ sanctuary_gates = Location('Sanctuary Gates', sanctuary_gates_visit)
 def sanctuary_kings_palace_visit(player):
 	if player.progress['king_dialogue']:
 		dialogue('King Brand: Hello, young traveller.')
-		choice = choose(
-			'King Brand: Do you wish to hear the story of Asathryne?',
-			('Yes', 'No'))
+		choice = choose('King Brand: Do you wish to hear the story of Asathryne?', ('Yes', 'No'))
 		if choice == 1:
 			for line in king_story: 
 				dialogue(f'King Brand: {line}')
@@ -885,7 +846,7 @@ def main():
 	while True:
 		print(f'>>> Asathryne <<< v{version}')
 		print('1) New game\n2) Load game\n3) Help')
-		choice = num_input()
+		choice = num_input('Type a number and press enter to continue:\n')
 		clear()
 		if choice == 1:
 			dialogue('Before the game begins, I want to thank you for playing this beta version of the game!')
@@ -899,7 +860,7 @@ def main():
 			dialogue('Thanks so much, and I hope you enjoy!')
 			player = PlayerCharacter()
 			player.build_char()
-			if dialogue('--- Type \'skip\' to skip the tutorial, or press enter to continue\n') == 'skip':
+			if choose('Skip the tutorial?', ('Yes', 'No')) == 1:
 				player.equip(player.class_type.weap)
 				player.lvl_up()
 			else:
@@ -910,18 +871,19 @@ def main():
 				dialogue('Kanron: Before you go venturing off into the depths of this realm, you must first master some basic skills.')
 				dialogue('Kanron: Your stats determine your performance in battle, and the abilities you can learn.')
 				dialogue('Kanron: There are 4 main stats: Strength, Intelligence, Agility, and Defense.')
-				choice = choose(
-					'Kanron: Do you want to learn more about stats?',
-					('Yes', 'No'))
+				choice = choose('Kanron: Do you want to learn more about stats?', ('Yes', 'No'))
 				if choice == 1:
-					dialogue('Kanron: Strength increases the amount of damage you deal with physical attacks.')
-					dialogue('Kanron: Intelligence increases the potency of your spells.')
-					dialogue('Kanron: Agility determines the accuracy of your attacks, and how often you dodge attacks.')
-					dialogue('Kanron: Defense determines how much damage you take from physical attacks.')
-					dialogue('Kanron: Your mana determines your use of abilities.')
-					dialogue('Kanron: Your health determines how much damage you can take before you perish.')
+					while True:
+						dialogue('Kanron: Strength increases the amount of damage you deal with physical attacks.')
+						dialogue('Kanron: Intelligence increases the potency of your spells.')
+						dialogue('Kanron: Agility determines the accuracy of your attacks, and how often you dodge attacks.')
+						dialogue('Kanron: Defense determines how much damage you take from physical attacks.')
+						dialogue('Kanron: Your mana determines your use of abilities.')
+						dialogue('Kanron: Your health determines how much damage you can take before you perish.')
+						if choose('Kanron: Would you like me to repeat stats?', ('Yes', 'No')) == 2:
+							break
 				dialogue('Kanron: Let\'s talk about your level.')
-				dialogue('Kanron: Your level represents how powerful you are, and determines the level of your enemies; when you go up a level, you will recieve 3 skill points to spend on any of the 4 stats, and 1 ability point to learn/upgrade abilities. Additionally, your health and mana will automatically increase.')
+				dialogue('Kanron: Your level represents how powerful you are, and determines the level of your enemies; when you go up a level, you will recieve 3 skill points to spend on any of the 4 stats, and 1 ability point to learn/upgrade abilities. Additionally, your health and mana will automatically increase and regenerate.')
 				dialogue('Kanron: You can gain XP (experience points) in battle; when you have enough, you\'ll go up one level and get to use your skill points.')
 				dialogue('Kanron: Let\'s upgrade your stats. For your class, you recieve an extra 3 skill points in the stat that your class favors, and you will recieve 1 level up.')
 				player.lvl_up()
@@ -949,7 +911,7 @@ def main():
 				player = saves[choice - 1] 
 				player.progress['area'].visit(player)
 		elif choice == 3:
-			dialogue('To choose which option you want, type the corresponding number and press enter')
+			dialogue('To choose which option you want in any menu, type the corresponding number and press enter.')
 			dialogue('work in progress')
 		else:
 			print('--- Invalid choice')
