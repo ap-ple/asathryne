@@ -2,9 +2,9 @@ from random import randint
 import simplejson
 import os
 from jsonpickle import encode, decode
-from stuff import clear, dialogue, num_input
+from stuff import clear, dialogue, num_input, choose
 
-version = '0.0.2'
+version = '0.1.1'
 bugs = (
 'Stun deals damage but does not stun',
 'Protection has no effect', 
@@ -15,17 +15,23 @@ bugs = (
 Roadmap
 
 now:
-multiple enemies/ally based combat
+improve help function
+
+soon:
 status effects for combat
-choices function, replace all current choice loops with this (maybe not)
+debug mode
 revamp items
 	- active items
 	- equipping weapons
 	- item requirements like classes, eg bows for rangers
 revamp classes
 	- subclasses
+multiple enemy/ally based combat
+quests
 
 later:
+different way to traverse asathryne than just areas and locations?
+	- grid
 add followers/allies
 add more abilities 
 	- use global targeting like all, all_ally, all_enemy
@@ -34,6 +40,8 @@ outsource creative writing and worldbuilding
 multiplayer?
 	- pvp
 	- co-op
+pygame!
+or maybe some other sort of GUI
 '''
 
 class Character():
@@ -118,10 +126,10 @@ class PlayerCharacter(Character):
 		print(self)
 		print(f'Level {self.lvl} {self.class_type}')
 		print(f'{self.gold} Gold')
-		print(f'XP - {self.xp}/{(self.lvl + 2) ** 2}')
-		print(f'{self.abi_points} ability points left')
-		print(f'{self.health} Health')
-		print(f'{self.mana} Mana')
+		print(f'{self.xp}/{(self.lvl + 2) ** 2} xp')
+		print(f'{self.abi_points} ability points')
+		print(f'{self.current_health}/{self.health} health')
+		print(f'{self.current_mana}/{self.mana} mana')
 		print(f'Strength - {self.strength}')
 		print(f'Intelligence - {self.intelligence}')
 		print(f'Agility - {self.agility}')
@@ -326,7 +334,7 @@ class PlayerCharacter(Character):
 									print('--- Invalid choice')
 									continue
 								target = targets[choice - 1]
-								self, target = ability.use(self, target)
+								ability.use(self, target)
 								self.current_mana -= ability.cost
 								break
 						elif ability.target == 'all_enemy':
@@ -615,11 +623,11 @@ classes = [warrior, sorcerer, ranger, paladin]
 sanctuary_apothecary = Shop(
 	name = 'Sanctuary Apothecary',
 	stock = [pot_health, pot_mana],
-	greeting = 'Welcome to the Apothecary! We have a variety of potions for sale. Take a look at what we have in stock.')
+	greeting = 'Apothecary: Welcome to the Apothecary! We have a variety of potions for sale. Take a look at what we have in stock.')
 sanctuary_blacksmith = Shop(
 	name = 'Sanctuary Blacksmith',
 	stock = [axe, staff, bow, sword],
-	greeting = 'Hello there, traveller! You look like you could use a reliable weapon. Step into my shop and take a look at my many wares!')
+	greeting = 'Blacksmith: Hello there, traveller! You look like you could use a reliable weapon. Step into my shop and take a look at my many wares!')
 
 def sanctuary_gates_visit(player):
 	if player.progress['gates_unlocked']:
@@ -627,95 +635,82 @@ def sanctuary_gates_visit(player):
 		return
 	elif player.progress['king_dialogue']:
 		dialogue('Asathryne Gatekeeper: Halt there, young - ')
-		dialogue('Oh. You spoke with the King? I suppose my orders are to let you through then. Here, hand me the key.')
-		while True:
-			last_option = dialogue('1) Return to Sanctuary\n2) Unlock the gates\n')
-			if last_option == '1':
-				dialogue('Very well. Return to the town square, and come back here when you are ready.')
-				return
-			elif last_option == '2':
-				player.item_remove(sanctuary_key)
-				dialogue('--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.')
-				dialogue('Good luck out there, traveller.')
-				player.progress['gates_unlocked'] = True
-				forest_of_mysteries.visit(player)
-				return
-			else: 
-				print('--- Invalid choice')
-	dialogue('Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!')
-	player.progress['gates_dialogue'] = True
-	while True:
-		option_gate = dialogue('Type \'go\' to go meet King Brand, or \'exit\' to return to the town square.\n').lower()
-		if option_gate == 'go':
-			sanctuary_kings_palace.visit(player)
-			return
-		elif option_gate == 'exit':
-			clear()
-			dialogue('--- You return to the town square.')
+		choice = choose(
+			'Asathryne Gatekeeper: Oh. You spoke with the King? I suppose my orders are to let you through then. Here, hand me the key.',
+			('Return to Sanctuary', 'Unlock the gates'))
+		if choice == 1:
+			dialogue('Asathryne Gatekeeper: Very well. Return to the town square, and come back here when you are ready.')
 			return
 		else:
-			clear()
-			gate_random = randint(1, 3)
-			if gate_random == 1: 
-				dialogue('What are you waiting for? Go on!')
-			elif gate_random == 2: 
-				dialogue('Don\'t think standing here will convince me to open this gate.')
-			else: 
-				dialogue('Brand is waiting for you.')
+			player.item_remove(sanctuary_key)
+			dialogue('--- You give the key to the gatekeeper. The gates open, revealing an expansive forest, teeming with otherworldly life.')
+			dialogue('Asathryne Gatekeeper: Good luck out there, traveller.')
+			player.progress['gates_unlocked'] = True
+			forest_of_mysteries.visit(player)
+			return
+	choice = choose(
+		'Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!',
+		('Meet king brand', 'Return to town square'))
+	player.progress['gates_dialogue'] = True
+	if choice == 1:
+		sanctuary_kings_palace.visit(player)
+		return
+	else:
+		clear()
+		dialogue('--- You return to the town square.')
+		return
 sanctuary_gates = Location('Sanctuary Gates', sanctuary_gates_visit)
 
 def sanctuary_kings_palace_visit(player):
 	if player.progress['king_dialogue']:
 		dialogue('King Brand: Hello, young traveller.')
-		while True:
-			king_story_repeat = dialogue('Do you wish to hear the story of Asathryne? (Y/N): ').lower()
-			if king_story_repeat == 'y':
-				for s in king_story: dialogue(s)
-				return
-			elif king_story_repeat == 'n':
-				dialogue('Oh well, maybe for another day. Fare well, traveller!')
-				return
-			else:
-				print('--- Invalid choice')
+		choice = choose(
+			'King Brand: Do you wish to hear the story of Asathryne?',
+			('Yes', 'No'))
+		if choice == 1:
+			for line in king_story: 
+				dialogue(f'King Brand: {line}')
+			return
+		else:
+			dialogue('King Brand: Oh well, maybe for another day. Fare well, traveller!')
+			return
 	dialogue(f'King Brand: At last, a brave {player.class_type} has arisen once more in this kingdom, here on a quest to save the kingdom of Asathryne from the dark evil that lies beyond the gates.')
-	dialogue('Tell me young traveller, what do you seek from me?')
-	while True:
-		if player.progress['gates_dialogue']: 
-			option_1 = dialogue('1) I\'m here to learn about Asathryne\n2) The gate keeper has sent me to meet you\n')
-		else: 
-			option_1 = dialogue('1) I\'m here to learn about Asathryne\n')
-		if option_1 == '1':
-			for s in king_story: 
-				dialogue(s)
-			dialogue('You will be the one to free us from this crisis.')
-			dialogue('Here, take this key; you will need it to open the gate into what remains of Asathryne.')
-			sanctuary_key.find(player)
-			dialogue('Fare well, young traveller.')
-			player.progress['king_dialogue'] = True
-			return
-		elif option_1 == '2' and player.progress['gates_dialogue']:
-			dialogue('Ah, the gate keeper. He forbids anyone entry to the rest of Asathryne, simply because he wants to protect them.')
-			break
-		else:
-			print('--- Invalid choice')
-	while True:
-		option_2 = dialogue('Let me ask you a question, traveller. Would you like to hear the Story of Asathryne? (Y/N)\n').lower()
-		if option_2 == 'n':
-			dialogue('Very well, very well, let me see... it\'s here somewhere... ah! The Key to Asathryne. Take this, young traveller, and good luck!')
-			sanctuary_key.find(player)
-			player.progress['king_dialogue'] = True
-			return
-		elif option_2 == 'y':
-			for s in king_story:
-				dialogue(s)
-			dialogue('You will be the one to free us from this crisis.')
-			dialogue('Here, take this key; you will need it to open the gate into what remains of Asathryne.')
-			sanctuary_key.find(player)
-			dialogue('Fare well, young traveller.')
-			player.progress['king_dialogue'] = True
-			return
-		else:
-			print('--- Invalid choice')
+	if player.progress['gates_dialogue']: 
+		choice = choose(
+			'King Brand: Tell me young traveller, what do you seek from me?',
+			('I\'m here to learn about Asathryne', 'The gate keeper has sent me to meet you'))
+	else: 
+		choice = choose(
+			'King Brand: Tell me young traveller, what do you seek from me?',
+			('I\'m here to learn about Asathryne',))
+	if choice == 1:
+		for line in king_story: 
+			dialogue(f'King Brand: {line}')
+		dialogue('King Brand: You will be the one to free us from this crisis.')
+		dialogue('King Brand: Here, take this key; you will need it to open the gate into what remains of Asathryne.')
+		sanctuary_key.find(player)
+		dialogue('King Brand: Fare well, young traveller.')
+		player.progress['king_dialogue'] = True
+		return
+	else:
+		dialogue('King Brand: Ah, the gate keeper. He forbids anyone entry to the rest of Asathryne, simply because he wants to protect them.')
+	choice = choose(
+		'King Brand: Let me ask you a question, traveller. Would you like to hear the Story of Asathryne?',
+		('Yes', 'No'))
+	if choice == 1:
+		dialogue('Very well, very well, let me see... it\'s here somewhere... ah! The Key to Asathryne. Take this, young traveller, and good luck!')
+		sanctuary_key.find(player)
+		player.progress['king_dialogue'] = True
+		return
+	else:
+		for line in king_story: 
+			dialogue(f'King Brand: {line}')
+		dialogue('King Brand: You will be the one to free us from this crisis.')
+		dialogue('King Brand: Here, take this key; you will need it to open the gate into what remains of Asathryne.')
+		sanctuary_key.find(player)
+		dialogue('King Brand: Fare well, young traveller.')
+		player.progress['king_dialogue'] = True
+		return
 sanctuary_kings_palace = Location('Sanctuary King\'s Palace', sanctuary_kings_palace_visit)
 
 def forest_main_visit(player):
@@ -742,7 +737,7 @@ class Stun(Ability):
 		
 		super().__init__(
 			name = 'Stun',
-			desc = 'You swing your weapon, stunning target enemy for a duration.',
+			desc = 'You attack with immense force, stunning target enemy for a duration.',
 			stat = 'strength',
 			cost = 40,
 			active = True,
@@ -774,7 +769,6 @@ class Stun(Ability):
 			target.status['stun'] = self.duration
 		else:
 			dialogue(f'{user} missed!')
-		return (user, target)
 
 class Fireball(Ability):
 
@@ -806,18 +800,18 @@ class Fireball(Ability):
 	def use(self, user, target):
 
 		dialogue(f'{user} uses {self} on {target}!')
-		damage = self.damage * user.intelligence
+		damage = int(self.damage * user.intelligence * (randint(90, 110) / 100))
 		dialogue(f'The fireball burns {target} dealing {damage} damage!')
 		target.current_health -= damage
-		return (user, target)
+		#return (user, target)
 
-class SureShot(Ability):
+class SureStrike(Ability):
 
 	def __init__(self):
 		
 		super().__init__(
-			name = 'Sure Shot',
-			desc = 'You fire a well-aimed shot from your bow at target enemy, more damaging and accurate than a normal attack.',
+			name = 'Sure Strike',
+			desc = 'You precisely attack target enemy, more damaging and accurate than a normal attack.',
 			stat = 'agility',
 			cost = 15,
 			active = True,
@@ -848,7 +842,6 @@ class SureShot(Ability):
 			target.current_health -= attack.damage
 		else:
 			dialogue(f'{user} missed!')
-		return (user, target)
 
 class Protection(Ability):
 
@@ -883,15 +876,14 @@ class Protection(Ability):
 		dialogue(f'{user} uses {self} on {target}!')
 		target.status['resistance'] = [self.resistance, self.duration]
 		dialogue(f'{target}\'s resistance has been increased for {self.duration} turns!')
-		return (user, target)
 
-abilities = [Stun(), Fireball(), SureShot(), Protection()]
+abilities = [Stun(), Fireball(), SureStrike(), Protection()]
 
 def main():
 	clear()
 	while True:
 		print(f'>>> Asathryne <<< v{version}')
-		print('1) New game\n2) Load game')
+		print('1) New game\n2) Load game\n3) Help')
 		choice = num_input()
 		clear()
 		if choice == 1:
@@ -912,31 +904,27 @@ def main():
 			else:
 				dialogue(f'Welcome to The Realm of Asathryne, {player}. A kingdom filled with adventure and danger, with much in store for those brave enough to explore it. Of course, nothing a {player.class_type} such as yourself can\'t handle.')
 				dialogue('Oh, of course! Allow me to introduce myself. My name is Kanron, your advisor.')
-				dialogue(f'You can\'t just go wandering off into Asathryne without a weapon. Every {player.class_type} needs a {player.class_type.weap}!')
+				dialogue(f'Kanron: You can\'t just go wandering off into Asathryne without a weapon. Every {player.class_type} needs a {player.class_type.weap}!')
 				player.equip(player.class_type.weap)
-				dialogue('Before you go venturing off into the depths of this realm, you must first master some basic skills.')
-				dialogue('Your stats determine your performance in battle, and the abilities you can learn.')
-				dialogue('There are 4 main stats: Strength, Intelligence, Agility, and Defense.')
-				while True:
-					learn_more = dialogue('Do you want to learn more about stats? (Y/N)\n').lower()
-					if learn_more == 'y':
-						dialogue('Strength increases the amount of damage you deal with physical attacks.')
-						dialogue('Intelligence increases the potency of your spells.')
-						dialogue('Agility determines the accuracy of your attacks, and how often you dodge attacks.')
-						dialogue('Defense determines how much damage you take from physical attacks.')
-						dialogue('Your mana determines your use of abilities.')
-						dialogue('Your health determines how much damage you can take before you perish.')
-						break
-					elif learn_more == 'n': 
-						break
-					else: 
-						print('--- Invalid choice')
-				dialogue('Let\'s talk about your level.')
-				dialogue('Your level represents how powerful you are, and determines the level of your enemies; when you go up a level, you will recieve 3 skill points to spend on any of the 4 stats, and 1 ability point to learn/upgrade abilities. Additionally, your health and mana will automatically increase.')
-				dialogue('You can gain XP (experience points) in battle; when you have enough, you\'ll go up one level and get to use your skill points.')
-				dialogue('Let\'s upgrade your stats. For your class, you recieve an extra 3 skill points in the stat that your class favors, and you will recieve 1 level up.')
+				dialogue('Kanron: Before you go venturing off into the depths of this realm, you must first master some basic skills.')
+				dialogue('Kanron: Your stats determine your performance in battle, and the abilities you can learn.')
+				dialogue('Kanron: There are 4 main stats: Strength, Intelligence, Agility, and Defense.')
+				choice = choose(
+					'Kanron:  you want to learn more about stats?',
+					('Yes', 'No'))
+				if choice == 1:
+					dialogue('Kanron: Strength increases the amount of damage you deal with physical attacks.')
+					dialogue('Kanron: Intelligence increases the potency of your spells.')
+					dialogue('Kanron: Agility determines the accuracy of your attacks, and how often you dodge attacks.')
+					dialogue('Kanron: Defense determines how much damage you take from physical attacks.')
+					dialogue('Kanron: Your mana determines your use of abilities.')
+					dialogue('Kanron: Your health determines how much damage you can take before you perish.')
+				dialogue('Kanron: Let\'s talk about your level.')
+				dialogue('Kanron: Your level represents how powerful you are, and determines the level of your enemies; when you go up a level, you will recieve 3 skill points to spend on any of the 4 stats, and 1 ability point to learn/upgrade abilities. Additionally, your health and mana will automatically increase.')
+				dialogue('Kanron: You can gain XP (experience points) in battle; when you have enough, you\'ll go up one level and get to use your skill points.')
+				dialogue('Kanron: Let\'s upgrade your stats. For your class, you recieve an extra 3 skill points in the stat that your class favors, and you will recieve 1 level up.')
 				player.lvl_up()
-				dialogue('Great job! Now that you have learned the basics, it is time you start your journey into the Realm of Asathryne.')
+				dialogue('Kanron: Great job! Now that you have learned the basics, it is time you start your journey into the Realm of Asathryne.')
 			sanctuary.visit(player)
 		elif choice == 2:
 			saves = []
@@ -959,6 +947,9 @@ def main():
 					continue
 				player = saves[choice - 1] 
 				player.progress['area'].visit(player)
+		elif choice == 3:
+			dialogue('To choose which option you want, type the corresponding number and press enter')
+			dialogue('work in progress')
 		else:
 			print('--- Invalid choice')
 if __name__ == '__main__': 
