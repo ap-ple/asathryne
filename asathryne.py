@@ -4,7 +4,7 @@ import os
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input, choose
 
-version = '0.1.1'
+version = '0.1.2'
 bugs = (
 'Stun deals damage but does not stun',
 'Protection has no effect', 
@@ -42,6 +42,7 @@ multiplayer?
 	- co-op
 pygame!
 or maybe some other sort of GUI
+backwards compatibility for saves
 '''
 
 class Character():
@@ -910,7 +911,7 @@ def main():
 				dialogue('Kanron: Your stats determine your performance in battle, and the abilities you can learn.')
 				dialogue('Kanron: There are 4 main stats: Strength, Intelligence, Agility, and Defense.')
 				choice = choose(
-					'Kanron:  you want to learn more about stats?',
+					'Kanron: Do you want to learn more about stats?',
 					('Yes', 'No'))
 				if choice == 1:
 					dialogue('Kanron: Strength increases the amount of damage you deal with physical attacks.')
