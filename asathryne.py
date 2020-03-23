@@ -4,30 +4,30 @@ import os
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input, choose
 
-version = '0.1.3'
-bugs = (
-'Stun deals damage but does not stun',
-'Protection has no effect', 
-'Potions are unusable', 
-'Weapons cannot be equipped/unequipped')
+version = '0.1.4'
 
 '''
 Roadmap
 
 now:
-improve help function
+0.2.1
+status effects for combat
+improve view character method
 
 soon:
-status effects for combat
+revamp stats
+	- stat dict
+	- more combat stat balancing
+	- revamp lvl_up
 debug mode
 revamp items
 	- active items
-	- equipping weapons
+	- equipping weapons, equipped dict attribute
 	- item requirements like classes, eg bows for rangers
 revamp classes
 	- subclasses
 multiple enemy/ally based combat
-quests
+quests  
 
 later:
 different way to traverse asathryne than just areas and locations?
@@ -118,6 +118,7 @@ class PlayerCharacter(Character):
 		self.progress = {'area': '', 'king_dialogue': False, 'gates_dialogue': False, 'gates_unlocked': False}
 		self.class_type = ''
 		self.abi_points = 0
+		self.version = version
 
 	def view_stats(self):
 
@@ -217,6 +218,9 @@ class PlayerCharacter(Character):
 		'''Whenever the player's xp reaches a certain point, they will level up'''
 
 		clear()
+		if self.xp < (self.lvl + 2) ** 2:
+			print('--- Unable to level up')
+			return
 		while self.xp >= (self.lvl + 2) ** 2:
 			self.xp -= (self.lvl + 2) ** 2
 			self.lvl += 1
@@ -231,7 +235,9 @@ class PlayerCharacter(Character):
 				for stat in ['strength', 'intelligence', 'agility', 'defence']:
 					current_stat = getattr(self, stat)
 					upgrade = num_input(f'--- {stat.capitalize()}: {current_stat} ({points} points remaining) Add: ')
-					if upgrade > points: upgrade = points
+					if upgrade > points:
+						dialogue(f'--- Not enough points, added {points} points')
+						upgrade = points
 					points -= upgrade
 					setattr(self, stat, current_stat + upgrade)
 					clear()
@@ -710,14 +716,14 @@ class Stun(Ability):
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = {1: 1.2, 2: 1.4, 3: 1.5}.get(self.lvl)
-		self.duration = {1: 1, 2: 1, 3: 2}.get(self.lvl)
+		self.damage = {1: 1.2, 2: 1.4, 3: 1.5}[self.lvl]
+		self.duration = 1
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}.get(self.lvl):
+		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}[self.lvl]:
 			return True
 		return False
 
@@ -749,13 +755,13 @@ class Fireball(Ability):
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = {1: 4, 2: 7, 3: 10}.get(self.lvl)
+		self.damage = {1: 4, 2: 7, 3: 10}[self.lvl]
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}.get(self.lvl):
+		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}[self.lvl]:
 			return True
 		return False
 
@@ -784,14 +790,14 @@ class SureStrike(Ability):
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.damage = {1: 1.3, 2: 1.5, 3: 1.7}.get(self.lvl)
-		self.accuracy = {1: 1.5, 2: 1.5, 3: 2}.get(self.lvl)
+		self.damage = {1: 1.3, 2: 1.5, 3: 1.7}[self.lvl]
+		self.accuracy = {1: 1.5, 2: 1.5, 3: 2}[self.lvl]
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}.get(self.lvl):
+		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}[self.lvl]:
 			return True
 		return False
 
@@ -822,14 +828,14 @@ class Protection(Ability):
 		'''Levels up this ability, increasing its level and other stats'''
 
 		self.lvl += 1
-		self.resistance = {1: 1.3, 2: 1.5, 3: 1.6}.get(self.lvl)
-		self.duration = {1: 2, 2: 2, 3: 3}.get(self.lvl)
+		self.resistance = {1: 1.3, 2: 1.5, 3: 1.6}[self.lvl]
+		self.duration = {1: 2, 2: 2, 3: 3}[self.lvl]
 
 	def check(self, user):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}.get(self.lvl):
+		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}[self.lvl]:
 			return True
 		return False
 
@@ -846,18 +852,9 @@ def main():
 	while True:
 		print(f'>>> Asathryne <<< v{version}')
 		print('1) New game\n2) Load game\n3) Help')
-		choice = num_input('Type a number and press enter to continue:\n')
+		choice = num_input('(Type a number and press enter to select)\n')
 		clear()
 		if choice == 1:
-			dialogue('Before the game begins, I want to thank you for playing this beta version of the game!')
-			dialogue('The reason I\'m probably having you play this is because I really need help with developing this game.')
-			dialogue('All I ask of you is to provide any and all feedback and suggestions that you have for me.')
-			dialogue('If possible, I\'m also looking for people who are good at creative writing and worldbuilding to help me develop story!')
-			print('One more thing, here are a couple known bugs in this version. If you run into something not on this list, please report it.')
-			for bug in bugs:
-				print(f' - {bug}')
-			dialogue()
-			dialogue('Thanks so much, and I hope you enjoy!')
 			player = PlayerCharacter()
 			player.build_char()
 			if choose('Skip the tutorial?', ('Yes', 'No')) == 1:
@@ -905,14 +902,19 @@ def main():
 					print(f'{i}) {s.name} - Level {s.lvl} {s.class_type}')
 				choice = num_input()
 				clear()
-				if choice <= 0 or choice > len(saves):
+				if choice > len(saves) or choice <= 0:
 					print('--- Invalid choice')
 					continue
 				player = saves[choice - 1] 
+				try:
+					if player.version != version:
+						dialogue(f'WARNING: This character was created in version {player.version}. Current version is {version}. If you continue, unexpected errors may occur.')
+				except AttributeError:
+					dialogue(f'WARNING: This character was created in an older version. Current version is {version}. If you continue, unexpected errors may occur.')
 				player.progress['area'].visit(player)
 		elif choice == 3:
-			dialogue('To choose which option you want in any menu, type the corresponding number and press enter.')
-			dialogue('work in progress')
+			dialogue('To select options in any menu, type the corresponding number and press enter.')
+			dialogue('To level up, type the amount of points to add to the current stat, or type nothing if you want to add none. If not all points are used, it will cycle over again.')
 		else:
 			print('--- Invalid choice')
 if __name__ == '__main__': 
