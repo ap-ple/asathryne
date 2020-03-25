@@ -1,62 +1,76 @@
 from random import randint
 import simplejson
 import os
+import time
+import keyboard
 from jsonpickle import encode, decode
-from stuff import clear, dialogue, num_input, choose
+from stuff import clear, dialogue, num_input, choose, clear_input, delay
 
-version = '0.1.4'
+version = '0.2.1'
 
 '''
 Roadmap
 
 now:
-0.2.1
-status effects for combat
-improve view character method
+0.2.2
+clean up keyboard usage
+	- should have no effect on typing outside of the application
+	- on_press/on_release?
+	- input lag and eccessive enter handling
+bugfixes
 
 soon:
-revamp stats
-	- stat dict
-	- more combat stat balancing
-	- revamp lvl_up
-debug mode
-revamp items
+rework items
 	- active items
-	- equipping weapons, equipped dict attribute
-	- item requirements like classes, eg bows for rangers
-revamp classes
+	- equipping items
+	- equipment dict attribute
+	- item requirements to equip
+rework view character
+	- choose from 3 sections
+	- stats, abilities, items sections
+	- stats - display info about current stats
+	- abilities - list known abilities, what they do, cost, etc
+	- items - currently equipped items, empty slots, inventory, equip items
+debug mode
+	- commands for debugging
+followers/allies
+	- followers list attribute
+	- controllable/ai
+expand classes
 	- subclasses
-multiple enemy/ally based combat
-quests  
+expand combat
+	- enemy abilities/items
+	- combat stat balancing
+	- enemy ai
+	- allies
+	- status effects
+abilities 
+	- global targeting
+	- passives and actives
+quests
+	- quest board
+	- npcs
+map/locations
+	- grid
 
 later:
-different way to traverse asathryne than just areas and locations?
-	- grid
-add followers/allies
-add more abilities 
-	- use global targeting like all, all_ally, all_enemy
-	- use passives and actives
-outsource creative writing and worldbuilding
-multiplayer?
+backwards compatibility
+pygame
+guis
+multiplayer
 	- pvp
 	- co-op
-pygame!
-or maybe some other sort of GUI
-backwards compatibility for saves
 '''
 
 class Character():
 	
-	def __init__(self, name, health, mana, lvl, strength, intelligence, agility, defence, xp, gold, weap, abilities = [], inventory = []):
+	def __init__(self, name, health, mana, lvl, stats, xp, gold, weap, abilities = [], inventory = []):
 
 		self.name = name 
 		self.health = health
 		self.mana = mana
 		self.lvl = lvl
-		self.strength = strength
-		self.intelligence = intelligence
-		self.agility = agility
-		self.defence = defence
+		self.stats = stats
 		self.xp = xp
 		self.gold = gold
 		self.weap = weap
@@ -74,10 +88,10 @@ class Character():
 		print(f'{self.gold} Gold')
 		print(f'Health - {self.health}')
 		print(f'Mana - {self.mana}')
-		print(f'Strength - {self.strength}')
-		print(f'Intelligence - {self.intelligence}')
-		print(f'Agility - {self.agility}')
-		print(f'Defence - {self.defence}')
+		print(f'Strength - {self.stats["strength"]}')
+		print(f'Intelligence - {self.stats["intelligence"]}')
+		print(f'Agility - {self.stats["agility"]}')
+		print(f'Defence - {self.stats["defence"]}')
 		print(f'Weapon - {self.weap} ({self.weap.damage[0]}-{self.weap.damage[1]} damage)')
 		print(f'Abilities - {self.abilities}')
 		print(f'Inventory - {self.inventory}')
@@ -94,9 +108,9 @@ class Character():
 				self.hit = hit
 				self.damage = damage
 
-		if randint(1, 100) < (self.agility / (self.agility + target.agility)) * 100 * accuracy_multiplier:
+		if randint(1, 100) < (self.stats['agility'] / (self.stats['agility'] + target.stats['agility'])) * 100 * accuracy_multiplier:
 			hit = True
-			damage = int(self.strength / (self.strength + target.defence) * randint(*self.weap.damage) * damage_multiplier)
+			damage = int(self.stats['strength'] / (self.stats['strength'] + target.stats['defence']) * randint(*self.weap.damage) * damage_multiplier)
 		else:
 			hit = False
 			damage = 0
@@ -114,7 +128,7 @@ class PlayerCharacter(Character):
 	
 	def __init__(self):
 
-		super().__init__(name = '', health = 50, mana = 25, lvl = 0, strength = 5, intelligence = 5, agility = 5, defence = 5, xp = 4, gold = 50, weap = '')
+		super().__init__(name = '', health = 50, mana = 25, lvl = 0, stats = {'strength': 5, 'intelligence': 5, 'agility': 5, 'defence': 5}, xp = 4, gold = 50, weap = '')
 		self.progress = {'area': '', 'king_dialogue': False, 'gates_dialogue': False, 'gates_unlocked': False}
 		self.class_type = ''
 		self.abi_points = 0
@@ -132,10 +146,10 @@ class PlayerCharacter(Character):
 		print(f'{self.abi_points} ability points')
 		print(f'{self.current_health}/{self.health} health')
 		print(f'{self.current_mana}/{self.mana} mana')
-		print(f'Strength - {self.strength}')
-		print(f'Intelligence - {self.intelligence}')
-		print(f'Agility - {self.agility}')
-		print(f'Defence - {self.defence}')
+		print(f'Strength - {self.stats["strength"]}')
+		print(f'Intelligence - {self.stats["intelligence"]}')
+		print(f'Agility - {self.stats["agility"]}')
+		print(f'Defence - {self.stats["defence"]}')
 		print(f'Weapon - {self.weap} ({self.weap.damage[0]}-{self.weap.damage[1]} damage)')
 		print(f'Abilities - {self.abilities}')
 		print(f'Inventory - {self.inventory}')
@@ -146,14 +160,14 @@ class PlayerCharacter(Character):
 		'''Used in the beginning to build the player character'''
 
 		while True:
-			self.name = dialogue('What is your name, traveller?\n')
+			self.name = clear_input('What is your name, traveller?\n')
 			if self.name != '':
 				break
 			else: 
 				print('You must have have a name in this realm.')
 		self.class_type = classes[choose('Choose a class.', classes) - 1]
 		dialogue(f'--- You chose the {self.class_type} class, which favors {self.class_type.stat}.')
-		setattr(self, self.class_type.stat, getattr(self, self.class_type.stat) + 3)
+		self.stats[self.class_type.stat] += 3
 		self.inventory.append(self.class_type.weap)
 
 	def equip(self, weapon):
@@ -172,7 +186,7 @@ class PlayerCharacter(Character):
 		'''Used to remove an item from the player's inventory'''
 
 		if item in self.inventory:
-			dialogue(f'--- {item} has been removed from your inventory.\n')
+			dialogue(f'--- {item} has been removed from your inventory.')
 			self.inventory.remove(item)
 			return True
 		return False
@@ -190,38 +204,52 @@ class PlayerCharacter(Character):
 					if all(a.name != abi.name for a in self.abilities):
 						ability_list.append(abi)
 		if ability_list == []:
-			dialogue('--- There are no avaliable abilities to learn/upgrade.\n')
+			dialogue('--- There are no avaliable abilities to learn/upgrade.')
 			return False
+		choice = 1
 		while True:
 			print(f'--- You have {len(ability_list)} abilities to learn/upgrade.')
 			for i, abi in enumerate(ability_list, 1):
-				print(f'{i}) {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
-			choice = num_input()
+				if i == choice:
+					print(f' - {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc} <')
+				else:
+					print(f' - {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
+			time.sleep(delay)
+			pressed = keyboard.read_key(True)
+			if pressed == 'up':
+				if choice > 1:
+					choice -= 1
+			elif pressed == 'down':
+				if choice < len(ability_list):
+					choice += 1
+			elif pressed == 'enter':
+				time.sleep(delay)
+				clear()
+				break
 			clear()
-			if choice > len(ability_list) or choice <= 0:
-				print('--- Invalid choice')
-				continue
-			for i, abi in enumerate(ability_list, 1):
-				if choice == i:
-					if abi.lvl == 0: 
-						dialogue(f'--- You have learned {abi}.\n')
-						self.abilities.append(abi)
-						abi.upgrade()
-					else: 
-						dialogue(f'--- You have upgraded {abi}.\n')
-						abi.upgrade()					
-					self.abi_points -= 1
-					return True
+		ability = ability_list[choice - 1]
+		if ability.lvl == 0: 
+			dialogue(f'--- You have learned {ability}.')
+			self.abilities.append(abi)
+		else: 
+			dialogue(f'--- You have upgraded {ability}.')
+		ability.upgrade()
+		self.abi_points -= 1
+		return True
+
+	def lvl_up_avaliable(self):
+
+		return self.xp >= (self.lvl + 2) ** 2
 
 	def lvl_up(self):
 
 		'''Whenever the player's xp reaches a certain point, they will level up'''
 
 		clear()
-		if self.xp < (self.lvl + 2) ** 2:
+		if not self.lvl_up_avaliable():
 			print('--- Unable to level up')
 			return
-		while self.xp >= (self.lvl + 2) ** 2:
+		while self.lvl_up_avaliable():
 			self.xp -= (self.lvl + 2) ** 2
 			self.lvl += 1
 			self.health += 50
@@ -231,18 +259,29 @@ class PlayerCharacter(Character):
 			self.abi_points += 1
 			dialogue(f'--- You have leveled up to level {self.lvl}! Your power increases.\n')
 			points = 3
+			choice = 1
+			choices = ['Strength', 'Intelligence', 'Agility', 'Defence']
 			while points > 0:
-				for stat in ['strength', 'intelligence', 'agility', 'defence']:
-					current_stat = getattr(self, stat)
-					upgrade = num_input(f'--- {stat.capitalize()}: {current_stat} ({points} points remaining) Add: ')
-					if upgrade > points:
-						dialogue(f'--- Not enough points, added {points} points')
-						upgrade = points
-					points -= upgrade
-					setattr(self, stat, current_stat + upgrade)
+				print(f'You have {points} points.')
+				for i, c in enumerate(choices, 1):
+					if i == choice:
+						print(f' - {c}: {self.stats[c.lower()]} <')
+					else:
+						print(f' - {c}: {self.stats[c.lower()]}')
+				time.sleep(delay)
+				pressed = keyboard.read_key(True)
+				if pressed == 'up':
+					if choice > 1:
+						choice -= 1
+				elif pressed == 'down':
+					if choice < len(choices):
+						choice += 1
+				elif pressed == 'enter':
+					time.sleep(delay)
+					self.stats[choices[choice - 1].lower()] += 1
 					clear()
-					if points == 0:	
-						break
+					points -= 1
+				clear()
 			while self.abi_points > 0:
 				if not self.learn_ability(): 
 					break
@@ -253,6 +292,8 @@ class PlayerCharacter(Character):
 
 		with open(f'{self.name}_player_data.txt', 'w') as file:
 			file.write(encode(self))
+		clear()
+		print('--- Saved successfully!')
 
 	def combat(self, enemy):
 
@@ -283,41 +324,55 @@ class PlayerCharacter(Character):
 						dialogue('You missed!')
 				elif choice == 2: 
 					back = False
+					choice = 1
+					choices = tuple(abi for abi in self.abilities if abi.active) + ('Back',)
 					while True:
 						print('Abilities')
-						ability_list = [abi for abi in self.abilities if abi.active]
-						for i, abi in enumerate(ability_list, 1):
-							print(f'{i}) {abi} ({abi.cost} mana): {abi.desc}')
-						print(f'{len(ability_list) + 1}) Back')
-						choice = num_input()
-						clear()
-						if choice == len(ability_list) + 1:
-							back = True
-							break
-						elif choice > len(ability_list) or choice <= 0:
-							print('--- Invalid choice')
-							continue
-						ability = ability_list[choice - 1]
-						if ability.cost > self.current_mana:
-							print('--- Not enough mana')
-							continue
-						if ability.target == 'enemy' or ability.target == 'ally':
-							if ability.target == 'enemy':
-								targets = [enemy]
+						for i, c in enumerate(choices, 1):
+							if type(c) is not str:
+								if i == choice:
+									print(f' - {c} ({c.cost} mana): {c.desc} <')
+								else:
+									print(f' - {c} ({c.cost} mana): {c.desc}')
 							else:
-								targets = [self]
-							target = targets[choose('Choose a target.', targets) - 1]
-							ability.use(self, target)
-							self.current_mana -= ability.cost
-						elif ability.target == 'all_enemy':
-							pass
-						elif ability.target == 'all_ally':
-							pass
-						elif ability.target == 'all':
-							pass
-						break
-					if back:
+								if i == choice:
+									print(f' - {c} <')
+								else:
+									print(f' - {c}')
+						time.sleep(delay)
+						pressed = keyboard.read_key(True)
+						if pressed == 'up':
+							if choice > 1:
+								choice -= 1
+						elif pressed == 'down':
+							if choice < len(choices):
+								choice += 1
+						elif pressed == 'enter':
+							time.sleep(delay)
+							clear()
+							ability = choices[choice - 1]
+							if type(ability) is not str:
+								if ability.cost > self.current_mana:
+									print('--- Not enough mana')
+									continue
+							break
+						clear()
+					if ability == 'Back':
 						continue
+					if ability.target == 'enemy' or ability.target == 'ally':
+						if ability.target == 'enemy':
+							targets = [enemy]
+						else:
+							targets = [self]
+						target = targets[choose('Choose a target.', targets) - 1]
+						ability.use(self, target)
+						self.current_mana -= ability.cost
+					elif ability.target == 'all_enemy':
+						pass
+					elif ability.target == 'all_ally':
+						pass
+					elif ability.target == 'all':
+						pass
 				elif choice == 3:
 					dialogue('You passed.')
 				your_turn = False
@@ -369,11 +424,11 @@ class Item:
 		self.amount = amount
 		self.quest = quest
 
-	def find(self, char):
+	def find(self, player):
 
 		'''Used whenever the player character recieves this item'''
 
-		char.inventory.append(self)
+		player.inventory.append(self)
 		dialogue(f'--- You have recieved {self} worth {self.value} gold, and it has been added to your inventory.\n')
 	
 	def __repr__(self):
@@ -393,11 +448,10 @@ class Weapon(Item):
 
 class Ability:
 	
-	def __init__(self, name, desc, stat, cost, active, target):
+	def __init__(self, name, desc, cost, active, target):
 		
 		self.name = name
 		self.desc = desc
-		self.stat = stat
 		self.cost = cost
 		self.active = active
 		self.target = target
@@ -451,32 +505,38 @@ class Area(Location):
 			player.current_health = player.health
 			player.current_mana = player.mana
 		dialogue(f'--- You travel to {self}.')
+		choice = 1
 		while True:
-			print(self)
-			for i, l in enumerate(self.locations, 1):
-				print(f'{i}) {l}')
-			print(f'{len(self.locations) + 1}) View Character')
-			print(f'{len(self.locations) + 2}) Save')
-			if player.xp >= (player.lvl + 2) ** 2:
-				print(f'{len(self.locations) + 3}) Level up!')
-			choice = num_input()
-			if choice == len(self.locations) + 1: 
+			choices = self.locations + ('View Character', 'Save') + (('Level up!',) if player.lvl_up_avaliable() else ())
+			while True:
+				print(self)
+				for i, c in enumerate(choices, 1):
+					if i == choice:
+						print(f' - {c} <')
+					else:
+						print(f' - {c}')
+				time.sleep(delay)
+				pressed = keyboard.read_key(True)
+				if pressed == 'up':
+					if choice > 1:
+						choice -= 1
+				elif pressed == 'down':
+					if choice < len(choices):
+						choice += 1
+				elif pressed == 'enter':
+					time.sleep(delay)
+					clear()
+					action = choices[choice - 1]
+					break
+				clear()
+			if action == 'View Character': 
 				player.view_stats()
-				continue
-			elif choice == len(self.locations) + 2: 
+			elif action == 'Save': 
 				player.save()
-				clear()
-				print('Saved successfully!')
-				continue
-			elif choice == len(self.locations) + 3 and player.xp >= (player.lvl + 2) ** 2: 
+			elif action == 'Level up!': 
 				player.lvl_up()
-				continue
-			elif choice > len(self.locations) or choice <= 0:
-				clear()
-				print('--- Invalid choice')
-				continue
-			clear()
-			self.locations[choice - 1].visit(player)
+			else:
+				action.visit(player)
 
 class Shop(Location):
 
@@ -493,47 +553,86 @@ class Shop(Location):
 		dialogue(f'--- You travel to {self}.')
 		dialogue(self.greeting)
 		while True:
-			print(f'--- You have {player.gold} gold.')
-			for i, item in enumerate(self.stock, 1):
-				print(f'{i}) {item} - {item.value} gold')
-			print(f'{len(self.stock) + 1}) Sell items')
-			print(f'{len(self.stock) + 2}) Leave')
-			choice = num_input()
-			clear()
-			if choice == len(self.stock) + 1:
-				if player.inventory == []:
-					print('--- error: inventory empty')
-					continue
-				while True:
-					print(f'--- You have {player.gold} gold.')
-					choice_inv = [i for i in player.inventory if not i.quest]
-					for i, item in enumerate(choice_inv, 1):
-						print(f'{i}) {item} - {int(item.value * 0.8)} gold')
-					print(f'{len(choice_inv) + 1}) Back')
-					choice = num_input()
+			choice = 1
+			choices = self.stock + ('Sell items', 'Leave')
+			while True:
+				print(f'--- You have {player.gold} gold.')
+				for i, c in enumerate(choices, 1):
+					if type(c) is not str:
+						if i == choice:
+							print(f' - {c} - {c.value} gold <')
+						else:
+							print(f' - {c} - {c.value} gold')			
+					else:
+						if i == choice:
+							print(f' - {c} <')
+						else:
+							print(f' - {c}')
+				time.sleep(delay)
+				pressed = keyboard.read_key(True)
+				if pressed == 'up':
+					if choice > 1:
+						choice -= 1
+				elif pressed == 'down':
+					if choice < len(choices):
+						choice += 1
+				elif pressed == 'enter':
+					time.sleep(delay)
 					clear()
-					if choice == len(choice_inv) + 1:
+					item = choices[choice - 1]
+					if type(item) is not str:
+						if item.value > player.gold:
+							print('--- Insufficient funds')
+							continue
+					break
+				clear()
+			if item == 'Sell items':
+				while True:
+					choice = 1
+					choices = [i for i in player.inventory if not i.quest] + ['Back']
+					if choices == ['Back']:
+						print('--- Nothing to sell')
 						break
-					elif choice > len(choice_inv) or choice <= 0:
-						print('--- Invalid choice')
-						continue
-					choice = choice_inv[choice - 1]
-					player.gold += int(choice.value * 0.8)
-					player.inventory.remove(choice)
-					print(f'--- You sold a {choice} for {int(choice.value * 0.8)} gold.')
-				continue
-			elif choice == len(self.stock) + 2: 
+					while True:
+						print(f'--- You have {player.gold} gold.')
+						for i, c in enumerate(choices, 1):
+							if type(c) is not str:
+								if i == choice:
+									print(f' - {c} - {int(c.value * 0.8)} gold <')
+								else:
+									print(f' - {c} - {int(c.value * 0.8)} gold')
+							else:
+								if i == choice:
+									print(f' - {c} <')
+								else:
+									print(f' - {c}')
+						time.sleep(delay)
+						pressed = keyboard.read_key(True)
+						if pressed == 'up':
+							if choice > 1:
+								choice -= 1
+						elif pressed == 'down':
+							if choice < len(choices):
+								choice += 1
+						elif pressed == 'enter':
+							time.sleep(delay)
+							clear()
+							choice = choices[choice - 1]
+							break
+						clear()
+					if choice == 'Back':
+						break
+					else:
+						player.gold += int(choice.value * 0.8)
+						player.inventory.remove(choice)
+						print(f'--- You sold a {choice} for {int(choice.value * 0.8)} gold.')
+			elif item == 'Leave': 
 				return
-			elif choice > len(self.stock) or choice <= 0:
-				print('--- Invalid choice')
-				continue
-			choice = self.stock[choice - 1]
-			if choice.value > player.gold:
-				print('--- Insufficient funds')
-				continue
-			player.gold -= choice.value
-			player.inventory.append(choice)
-			print(f'--- You bought a {choice} for {choice.value} gold.')
+			else:
+				if type(item) is not str:
+					player.gold -= item.value
+					player.inventory.append(item)
+					print(f'--- You bought a {item} for {item.value} gold.')
 
 class Slime(Character):
 
@@ -559,7 +658,6 @@ abi_points - If the player cannot learn abilities at the moment, they will recie
 '''
 
 king_story = (
-	'Very well. Go ahead and take a seat.',
 	'Now, Asathryne once was a kingdom filled with happiness and peace, ruled by Emperor Verandus.',
 	'Until one day, an evil never before seen, arrived in Asathryne and tore the realm apart, leaving nothing but a barren wasteland.',
 	'Sanctuary became the only thriving town left in the land.',
@@ -591,11 +689,11 @@ classes = [warrior, sorcerer, ranger, paladin]
 
 sanctuary_apothecary = Shop(
 	name = 'Sanctuary Apothecary',
-	stock = [pot_health, pot_mana],
+	stock = (pot_health, pot_mana),
 	greeting = 'Apothecary: Welcome to the Apothecary! We have a variety of potions for sale. Take a look at what we have in stock.')
 sanctuary_blacksmith = Shop(
 	name = 'Sanctuary Blacksmith',
-	stock = [axe, staff, bow, sword],
+	stock = (axe, staff, bow, sword),
 	greeting = 'Blacksmith: Hello there, traveller! You look like you could use a reliable weapon. Step into my shop and take a look at my many wares!')
 
 def sanctuary_gates_visit(player):
@@ -620,7 +718,7 @@ def sanctuary_gates_visit(player):
 			return
 	choice = choose(
 		'Asathryne Gatekeeper: Halt there, young traveller! There is a dangerous, dark evil behind these gates. I shall not let you pass, unless you have spoken with the King of Asathryne!',
-		('Meet king brand', 'Return to town square'))
+		('Meet the king', 'Return to town square'))
 	player.progress['gates_dialogue'] = True
 	if choice == 1:
 		sanctuary_kings_palace.visit(player)
@@ -636,13 +734,14 @@ def sanctuary_kings_palace_visit(player):
 		dialogue('King Brand: Hello, young traveller.')
 		choice = choose('King Brand: Do you wish to hear the story of Asathryne?', ('Yes', 'No'))
 		if choice == 1:
+			dialogue('King Brand: Very well. Go ahead and have a seat.')
 			for line in king_story: 
 				dialogue(f'King Brand: {line}')
 			return
 		else:
 			dialogue('King Brand: Oh well, maybe for another day. Fare well, traveller!')
 			return
-	dialogue(f'King Brand: At last, a brave {player.class_type} has arisen once more in this kingdom, here on a quest to save the kingdom of Asathryne from the dark evil that lies beyond the gates.')
+	dialogue(f'King Brand: At last, a brave {player.class_type} has arisen once more, here on a quest to save the kingdom of Asathryne from the dark evil that lies beyond the gates.')
 	if player.progress['gates_dialogue']: 
 		choice = choose(
 			'King Brand: Tell me young traveller, what do you seek from me?',
@@ -652,6 +751,7 @@ def sanctuary_kings_palace_visit(player):
 			'King Brand: Tell me young traveller, what do you seek from me?',
 			('I\'m here to learn about Asathryne',))
 	if choice == 1:
+		dialogue('King Brand: Very well. Go ahead and have a seat.')
 		for line in king_story: 
 			dialogue(f'King Brand: {line}')
 		dialogue('King Brand: You will be the one to free us from this crisis.')
@@ -666,38 +766,36 @@ def sanctuary_kings_palace_visit(player):
 		'King Brand: Let me ask you a question, traveller. Would you like to hear the Story of Asathryne?',
 		('Yes', 'No'))
 	if choice == 1:
-		dialogue('Very well, very well, let me see... it\'s here somewhere... ah! The Key to Asathryne. Take this, young traveller, and good luck!')
-		sanctuary_key.find(player)
-		player.progress['king_dialogue'] = True
-		return
+		dialogue('King Brand: Very well. Go ahead and have a seat.')
 	else:
-		for line in king_story: 
-			dialogue(f'King Brand: {line}')
-		dialogue('King Brand: You will be the one to free us from this crisis.')
-		dialogue('King Brand: Here, take this key; you will need it to open the gate into what remains of Asathryne.')
-		sanctuary_key.find(player)
-		dialogue('King Brand: Fare well, young traveller.')
-		player.progress['king_dialogue'] = True
-		return
+		dialogue('King Brand: Nonsense, I must regale this lore, it is my duty!')
+	for line in king_story: 
+		dialogue(f'King Brand: {line}')
+	dialogue('King Brand: You will be the one to free us from this crisis.')
+	dialogue('King Brand: Here, take this key; you will need it to open the gate into what remains of Asathryne.')
+	sanctuary_key.find(player)
+	dialogue('King Brand: Fare well, young traveller.')
+	player.progress['king_dialogue'] = True
+	return
 sanctuary_kings_palace = Location('Sanctuary King\'s Palace', sanctuary_kings_palace_visit)
 
-def forest_main_visit(player):
+def forest_visit(player):
 	player.combat(Slime(
 		name = 'Green Slime',
 		health = 50,
 		mana = 0,
 		lvl = 1,
-		strength = 3,
-		intelligence = 0,
-		agility = 4,
-		defence = 2,
+		stats = {'strength': 3,
+		'intelligence': 0,
+		'agility': 4,
+		'defence': 2},
 		weap = Weapon('Slime', (30, 40)),
 		gold = randint(3, 6),
 		xp = randint(2, 3)))
-forest_main = Location('Forest Main', forest_main_visit)
+forest = Location('Forest', forest_visit)
 
 sanctuary = Area('Sanctuary', (sanctuary_gates, sanctuary_kings_palace, sanctuary_apothecary, sanctuary_blacksmith), True)
-forest_of_mysteries = Area('Forest of Mysteries', (sanctuary, forest_main), False)
+forest_of_mysteries = Area('Forest of Mysteries', (sanctuary, forest), False)
 
 class Stun(Ability):
 
@@ -706,7 +804,6 @@ class Stun(Ability):
 		super().__init__(
 			name = 'Stun',
 			desc = 'You attack with immense force, stunning target enemy for a duration.',
-			stat = 'strength',
 			cost = 40,
 			active = True,
 			target = 'enemy')
@@ -723,7 +820,7 @@ class Stun(Ability):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}[self.lvl]:
+		if user.stats['strength'] >= {0: 8, 1: 13, 2: 20}[self.lvl]:
 			return True
 		return False
 
@@ -745,7 +842,6 @@ class Fireball(Ability):
 		super().__init__(
 			name = 'Fireball',
 			desc = 'You hurl a fireball at target enemy, dealing damage.',
-			stat = 'intelligence',
 			cost = 10,
 			active = True,
 			target = 'enemy')
@@ -761,14 +857,14 @@ class Fireball(Ability):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}[self.lvl]:
+		if user.stats['intelligence'] >= {0: 8, 1: 13, 2: 20}[self.lvl]:
 			return True
 		return False
 
 	def use(self, user, target):
 
 		dialogue(f'{user} uses {self} on {target}!')
-		damage = int(self.damage * user.intelligence * (randint(90, 110) / 100))
+		damage = int(self.damage * user.stats['intelligence'] * (randint(90, 110) / 100))
 		dialogue(f'The fireball burns {target} dealing {damage} damage!')
 		target.current_health -= damage
 		#return (user, target)
@@ -780,7 +876,6 @@ class SureStrike(Ability):
 		super().__init__(
 			name = 'Sure Strike',
 			desc = 'You precisely attack target enemy, more damaging and accurate than a normal attack.',
-			stat = 'agility',
 			cost = 15,
 			active = True,
 			target = 'enemy')
@@ -797,7 +892,7 @@ class SureStrike(Ability):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}[self.lvl]:
+		if user.stats['agility'] >= {0: 8, 1: 13, 2: 20}[self.lvl]:
 			return True
 		return False
 
@@ -818,7 +913,6 @@ class Protection(Ability):
 		super().__init__(
 			name = 'Protection',
 			desc = 'You summon a magical wall of protection, which prevents a percentage of damage dealt to target ally for a duration.',
-			stat = 'defence',
 			cost = 30,
 			active = True,
 			target = 'ally')
@@ -835,7 +929,7 @@ class Protection(Ability):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if getattr(user, self.stat) >= {0: 8, 1: 13, 2: 20}[self.lvl]:
+		if user.stats['defence'] >= {0: 8, 1: 13, 2: 20}[self.lvl]:
 			return True
 		return False
 
@@ -850,10 +944,7 @@ abilities = [Stun(), Fireball(), SureStrike(), Protection()]
 def main():
 	clear()
 	while True:
-		print(f'>>> Asathryne <<< v{version}')
-		print('1) New game\n2) Load game\n3) Help')
-		choice = num_input('(Type a number and press enter to select)\n')
-		clear()
+		choice = choose(f'>>> Asathryne <<< v{version}\n(Use arrow keys and press enter to select)', ('New game', 'Load game', 'Help'))
 		if choice == 1:
 			player = PlayerCharacter()
 			player.build_char()
@@ -896,26 +987,35 @@ def main():
 			if saves == []:
 				print('No saves found')
 				continue
+			choice = 1
 			while True:
 				print('Choose your character.')
-				for i, s in enumerate(saves, 1):
-					print(f'{i}) {s.name} - Level {s.lvl} {s.class_type}')
-				choice = num_input()
+				for i, c in enumerate(saves, 1):
+					if i == choice:
+						print(f' - {s.name} - Level {s.lvl} {s.class_type} <')
+					else:
+						print(f' - {s.name} - Level {s.lvl} {s.class_type}')
+				time.sleep(delay)
+				pressed = keyboard.read_key(True)
+				if pressed == 'up':
+					if choice > 1:
+						choice -= 1
+				elif pressed == 'down':
+					if choice < len(choices):
+						choice += 1
+				elif pressed == 'enter':
+					time.sleep(delay)
+					clear()
+					break
 				clear()
-				if choice > len(saves) or choice <= 0:
-					print('--- Invalid choice')
-					continue
-				player = saves[choice - 1] 
-				try:
-					if player.version != version:
-						dialogue(f'WARNING: This character was created in version {player.version}. Current version is {version}. If you continue, unexpected errors may occur.')
-				except AttributeError:
-					dialogue(f'WARNING: This character was created in an older version. Current version is {version}. If you continue, unexpected errors may occur.')
-				player.progress['area'].visit(player)
+			player = saves[choice - 1] 
+			try:
+				if player.version != version:
+					dialogue(f'WARNING: This character was created in version {player.version}. Current version is {version}. If you continue, unexpected errors may occur.')
+			except AttributeError:
+				dialogue(f'WARNING: This character was created in an older version. Current version is {version}. If you continue, unexpected errors may occur.')
+			player.progress['area'].visit(player)
 		elif choice == 3:
-			dialogue('To select options in any menu, type the corresponding number and press enter.')
-			dialogue('To level up, type the amount of points to add to the current stat, or type nothing if you want to add none. If not all points are used, it will cycle over again.')
-		else:
-			print('--- Invalid choice')
+			dialogue('To select options in any menu, use the up and down arrow keys to select the desired option and press enter.')
 if __name__ == '__main__': 
 	main()
