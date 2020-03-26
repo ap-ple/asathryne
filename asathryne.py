@@ -6,13 +6,13 @@ import keyboard
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input, choose, clear_input, delay
 
-version = '0.2.1'
+version = '0.2.2'
 
 '''
 Roadmap
 
 now:
-0.2.2
+0.2.3
 clean up keyboard usage
 	- should have no effect on typing outside of the application
 	- on_press/on_release?
@@ -992,9 +992,9 @@ def main():
 				print('Choose your character.')
 				for i, c in enumerate(saves, 1):
 					if i == choice:
-						print(f' - {s.name} - Level {s.lvl} {s.class_type} <')
+						print(f' - {c.name} - Level {c.lvl} {c.class_type} <')
 					else:
-						print(f' - {s.name} - Level {s.lvl} {s.class_type}')
+						print(f' - {c.name} - Level {c.lvl} {c.class_type}')
 				time.sleep(delay)
 				pressed = keyboard.read_key(True)
 				if pressed == 'up':
