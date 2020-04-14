@@ -6,20 +6,13 @@ import keyboard
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input, choose, clear_input, delay
 
-version = '0.2.2'
+version = '0.2.3'
 
 '''
 Roadmap
 
 now:
-0.2.3
-clean up keyboard usage
-	- should have no effect on typing outside of the application
-	- on_press/on_release?
-	- input lag and eccessive enter handling
-bugfixes
-
-soon:
+0.3.1
 rework items
 	- active items
 	- equipping items
@@ -31,6 +24,12 @@ rework view character
 	- stats - display info about current stats
 	- abilities - list known abilities, what they do, cost, etc
 	- items - currently equipped items, empty slots, inventory, equip items
+
+soon:
+clean up keyboard usage
+	- should have no effect on typing outside of the application
+	- on_press/on_release?
+	- input lag and eccessive enter handling
 debug mode
 	- commands for debugging
 followers/allies
@@ -159,11 +158,10 @@ class PlayerCharacter(Character):
 
 		'''Used in the beginning to build the player character'''
 
-		while True:
+		self.name = ''
+		while self.name == '':
 			self.name = clear_input('What is your name, traveller?\n')
-			if self.name != '':
-				break
-			else: 
+			if self.name == '': 
 				print('You must have have a name in this realm.')
 		self.class_type = classes[choose('Choose a class.', classes) - 1]
 		dialogue(f'--- You chose the {self.class_type} class, which favors {self.class_type.stat}.')
@@ -210,10 +208,7 @@ class PlayerCharacter(Character):
 		while True:
 			print(f'--- You have {len(ability_list)} abilities to learn/upgrade.')
 			for i, abi in enumerate(ability_list, 1):
-				if i == choice:
-					print(f' - {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc} <')
-				else:
-					print(f' - {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
+				print(f' {">" if i == choice else "-"} {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
 			time.sleep(delay)
 			pressed = keyboard.read_key(True)
 			if pressed == 'up':
@@ -264,10 +259,7 @@ class PlayerCharacter(Character):
 			while points > 0:
 				print(f'You have {points} points.')
 				for i, c in enumerate(choices, 1):
-					if i == choice:
-						print(f' - {c}: {self.stats[c.lower()]} <')
-					else:
-						print(f' - {c}: {self.stats[c.lower()]}')
+					print(f' {">" if i == choice else "-"} {c}: {self.stats[c.lower()]}')
 				time.sleep(delay)
 				pressed = keyboard.read_key(True)
 				if pressed == 'up':
@@ -330,15 +322,9 @@ class PlayerCharacter(Character):
 						print('Abilities')
 						for i, c in enumerate(choices, 1):
 							if type(c) is not str:
-								if i == choice:
-									print(f' - {c} ({c.cost} mana): {c.desc} <')
-								else:
-									print(f' - {c} ({c.cost} mana): {c.desc}')
+								print(f' {">" if i == choice else "-"} {c} ({c.cost} mana): {c.desc}')
 							else:
-								if i == choice:
-									print(f' - {c} <')
-								else:
-									print(f' - {c}')
+								print(f' {">" if i == choice else "-"} {c}')
 						time.sleep(delay)
 						pressed = keyboard.read_key(True)
 						if pressed == 'up':
@@ -511,10 +497,7 @@ class Area(Location):
 			while True:
 				print(self)
 				for i, c in enumerate(choices, 1):
-					if i == choice:
-						print(f' - {c} <')
-					else:
-						print(f' - {c}')
+					print(f' {">" if i == choice else "-"} {c}')
 				time.sleep(delay)
 				pressed = keyboard.read_key(True)
 				if pressed == 'up':
@@ -559,15 +542,9 @@ class Shop(Location):
 				print(f'--- You have {player.gold} gold.')
 				for i, c in enumerate(choices, 1):
 					if type(c) is not str:
-						if i == choice:
-							print(f' - {c} - {c.value} gold <')
-						else:
-							print(f' - {c} - {c.value} gold')			
+						print(f' {">" if i == choice else "-"} {c} - {c.value} gold')		
 					else:
-						if i == choice:
-							print(f' - {c} <')
-						else:
-							print(f' - {c}')
+						print(f' {">" if i == choice else "-"} {c}')
 				time.sleep(delay)
 				pressed = keyboard.read_key(True)
 				if pressed == 'up':
@@ -597,15 +574,9 @@ class Shop(Location):
 						print(f'--- You have {player.gold} gold.')
 						for i, c in enumerate(choices, 1):
 							if type(c) is not str:
-								if i == choice:
-									print(f' - {c} - {int(c.value * 0.8)} gold <')
-								else:
-									print(f' - {c} - {int(c.value * 0.8)} gold')
+								print(f' {">" if i == choice else "-"} {c} - {int(c.value * 0.8)} gold')
 							else:
-								if i == choice:
-									print(f' - {c} <')
-								else:
-									print(f' - {c}')
+								print(f' {">" if i == choice else "-"} {c}')
 						time.sleep(delay)
 						pressed = keyboard.read_key(True)
 						if pressed == 'up':
@@ -991,17 +962,14 @@ def main():
 			while True:
 				print('Choose your character.')
 				for i, c in enumerate(saves, 1):
-					if i == choice:
-						print(f' - {c.name} - Level {c.lvl} {c.class_type} <')
-					else:
-						print(f' - {c.name} - Level {c.lvl} {c.class_type}')
+					print(f' {">" if i == choice else "-"} {c.name} - Level {c.lvl} {c.class_type}')
 				time.sleep(delay)
 				pressed = keyboard.read_key(True)
 				if pressed == 'up':
 					if choice > 1:
 						choice -= 1
 				elif pressed == 'down':
-					if choice < len(choices):
+					if choice < len(saves):
 						choice += 1
 				elif pressed == 'enter':
 					time.sleep(delay)
