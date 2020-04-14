@@ -1,6 +1,7 @@
 import os
 import time
 import keyboard
+from math import prod
 from getpass import getpass
 
 delay = 0.15
@@ -44,10 +45,7 @@ def choose(prompt, choices):
     while True:
         print(prompt)
         for i, c in enumerate(choices, 1):
-            if i == choice:
-                print(f' - {c} <')
-            else:
-                print(f' - {c}')
+            print(f' {">" if i == choice else "-"} {c}')
         time.sleep(delay)
         pressed = keyboard.read_key(True)
         if pressed == 'up':
@@ -66,19 +64,19 @@ def choose(prompt, choices):
 def radical(num):
     numlist = []
     while True: 
-        for n in range(2, 999):
+        for n in range(2, num):
             if num % (n ** 2) == 0:
                 num /= (n ** 2)
                 numlist.append(n)
                 break
         else:
             break
-    newnum = 1
-    for n in numlist:
-        newnum *= n
-    if newnum == 1:
+    coef = prod(numlist)
+    if coef == 1:
         return f'√{int(num)}'
     elif num == 1:
-        return newnum
-    else:
-        return f'{newnum}√{int(num)}'
+        return coef
+    return f'{coef}√{int(num)}'
+
+if __name__ == '__main__':
+    dialogue('This is the stuff module.')
