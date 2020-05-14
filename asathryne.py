@@ -6,7 +6,7 @@ import keyboard
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input, choose, clear_input, delay
 
-version = '0.2.3'
+__version__ = '0.2.4'
 
 '''
 Roadmap
@@ -131,7 +131,7 @@ class PlayerCharacter(Character):
 		self.progress = {'area': '', 'king_dialogue': False, 'gates_dialogue': False, 'gates_unlocked': False}
 		self.class_type = ''
 		self.abi_points = 0
-		self.version = version
+		self.version = __version__
 
 	def view_stats(self):
 
@@ -317,7 +317,7 @@ class PlayerCharacter(Character):
 				elif choice == 2: 
 					back = False
 					choice = 1
-					choices = tuple(abi for abi in self.abilities if abi.active) + ('Back',)
+					choices = tuple(abi for abi in self.abilities if abi.active and abi.check()) + ('Back',)
 					while True:
 						print('Abilities')
 						for i, c in enumerate(choices, 1):
@@ -791,9 +791,7 @@ class Stun(Ability):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if user.stats['strength'] >= {0: 8, 1: 13, 2: 20}[self.lvl]:
-			return True
-		return False
+		return user.stats['strength'] >= {0: 8, 1: 13, 2: 20}[self.lvl]
 
 	def use(self, user, target):
 
@@ -828,9 +826,7 @@ class Fireball(Ability):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if user.stats['intelligence'] >= {0: 8, 1: 13, 2: 20}[self.lvl]:
-			return True
-		return False
+		return user.stats['intelligence'] >= {0: 8, 1: 13, 2: 20}[self.lvl]
 
 	def use(self, user, target):
 
@@ -863,9 +859,7 @@ class SureStrike(Ability):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if user.stats['agility'] >= {0: 8, 1: 13, 2: 20}[self.lvl]:
-			return True
-		return False
+		return user.stats['agility'] >= {0: 8, 1: 13, 2: 20}[self.lvl]
 
 	def use(self, user, target):
 
@@ -900,9 +894,7 @@ class Protection(Ability):
 
 		'''Checks if player is eligible to learn/upgrade this ability'''
 
-		if user.stats['defence'] >= {0: 8, 1: 13, 2: 20}[self.lvl]:
-			return True
-		return False
+		return user.stats['defence'] >= {0: 8, 1: 13, 2: 20}[self.lvl]
 
 	def use(self, user, target):
 
@@ -915,7 +907,7 @@ abilities = [Stun(), Fireball(), SureStrike(), Protection()]
 def main():
 	clear()
 	while True:
-		choice = choose(f'>>> Asathryne <<< v{version}\n(Use arrow keys and press enter to select)', ('New game', 'Load game', 'Help'))
+		choice = choose(f'>>> Asathryne <<< v{__version__}\n(Use arrow keys and press enter to select)', ('New game', 'Load game', 'Help'))
 		if choice == 1:
 			player = PlayerCharacter()
 			player.build_char()
@@ -978,10 +970,10 @@ def main():
 				clear()
 			player = saves[choice - 1] 
 			try:
-				if player.version != version:
-					dialogue(f'WARNING: This character was created in version {player.version}. Current version is {version}. If you continue, unexpected errors may occur.')
+				if player.version != __version__:
+					dialogue(f'WARNING: This character was created in version {player.version}. Current version is {__version__}. If you continue, unexpected errors may occur.')
 			except AttributeError:
-				dialogue(f'WARNING: This character was created in an older version. Current version is {version}. If you continue, unexpected errors may occur.')
+				dialogue(f'WARNING: This character was created in an older version. Current version is {__version__}. If you continue, unexpected errors may occur.')
 			player.progress['area'].visit(player)
 		elif choice == 3:
 			dialogue('To select options in any menu, use the up and down arrow keys to select the desired option and press enter.')
