@@ -6,7 +6,7 @@ import keyboard
 from jsonpickle import encode, decode
 from stuff import clear, dialogue, num_input, choose, clear_input, delay
 
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 
 '''
 Roadmap
@@ -189,54 +189,38 @@ class PlayerCharacter(Character):
 			return True
 		return False
 
-	def learn_ability(self):
+	def learn_ability(self, abilities):
 
 		'''Used whenever the player character can learn a new ability; only used in lvl_up as of current'''
 
 		ability_list = [abi for abi in self.abilities if abi.max_lvl > abi.lvl and abi.check(self)]
 		for abi in abilities: 
 			if abi.check(self):
-				if self.abilities == []:
+				if all(a.name != abi.name for a in self.abilities):
 					ability_list.append(abi)
-				else:
-					if all(a.name != abi.name for a in self.abilities):
-						ability_list.append(abi)
 		if ability_list == []:
 			dialogue('--- There are no avaliable abilities to learn/upgrade.')
 			return False
-		choice = 1
-		while True:
-			print(f'--- You have {len(ability_list)} abilities to learn/upgrade.')
-			for i, abi in enumerate(ability_list, 1):
-				print(f' {">" if i == choice else "-"} {abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}')
-			time.sleep(delay)
-			pressed = keyboard.read_key(True)
-			if pressed == 'up':
-				if choice > 1:
-					choice -= 1
-			elif pressed == 'down':
-				if choice < len(ability_list):
-					choice += 1
-			elif pressed == 'enter':
-				time.sleep(delay)
-				clear()
-				break
-			clear()
-		ability = ability_list[choice - 1]
+		abi_info = [f'{abi} ({abi.lvl}/{abi.max_lvl}): {abi.desc}' for abi in ability_list]
+		ability = ability_list[choose(f'--- You have {len(ability_list)} abilities to learn/upgrade.', abi_info) - 1]
 		if ability.lvl == 0: 
 			dialogue(f'--- You have learned {ability}.')
-			self.abilities.append(abi)
+			self.abilities.append(ability)
 		else: 
 			dialogue(f'--- You have upgraded {ability}.')
 		ability.upgrade()
 		self.abi_points -= 1
 		return True
 
+	def lvl_up_threshold(self):
+
+		return (self.lvl + 2) ** 2
+
 	def lvl_up_avaliable(self):
 
-		return self.xp >= (self.lvl + 2) ** 2
+		return self.xp >= self.lvl_up_threshold()
 
-	def lvl_up(self):
+	def lvl_up(self, abilities):
 
 		'''Whenever the player's xp reaches a certain point, they will level up'''
 
@@ -245,7 +229,7 @@ class PlayerCharacter(Character):
 			print('--- Unable to level up')
 			return
 		while self.lvl_up_avaliable():
-			self.xp -= (self.lvl + 2) ** 2
+			self.xp -= self.lvl_up_threshold()
 			self.lvl += 1
 			self.health += 50
 			self.mana += 25
@@ -275,7 +259,7 @@ class PlayerCharacter(Character):
 					points -= 1
 				clear()
 			while self.abi_points > 0:
-				if not self.learn_ability(): 
+				if not self.learn_ability(abilities): 
 					break
 
 	def save(self):
@@ -311,53 +295,34 @@ class PlayerCharacter(Character):
 					attack = self.attack(target)
 					if attack.hit:
 						dialogue(f'You hit {target} for {attack.damage} damage!')
-						target.current_health -= attack.damage						
+						target.current_health -= attack.damage
 					else: 
 						dialogue('You missed!')
 				elif choice == 2: 
-					back = False
-					choice = 1
-					choices = tuple(abi for abi in self.abilities if abi.active and abi.check()) + ('Back',)
+					choices = [abi for abi in self.abilities if abi.active] + ['Back']
+					choice_info = [f'{c} ({c.cost} mana): {c.desc}' if type(c) != str else c for c in choices]
 					while True:
-						print('Abilities')
-						for i, c in enumerate(choices, 1):
-							if type(c) is not str:
-								print(f' {">" if i == choice else "-"} {c} ({c.cost} mana): {c.desc}')
-							else:
-								print(f' {">" if i == choice else "-"} {c}')
-						time.sleep(delay)
-						pressed = keyboard.read_key(True)
-						if pressed == 'up':
-							if choice > 1:
-								choice -= 1
-						elif pressed == 'down':
-							if choice < len(choices):
-								choice += 1
-						elif pressed == 'enter':
-							time.sleep(delay)
-							clear()
-							ability = choices[choice - 1]
-							if type(ability) is not str:
-								if ability.cost > self.current_mana:
-									print('--- Not enough mana')
-									continue
-							break
-						clear()
-					if ability == 'Back':
+						choice = choices[choose('Abilities', choice_info) - 1]
+						if type(choice) != str:
+							if choice.cost > self.current_mana:
+								print('--- Not enough mana')
+								continue
+						break
+					if choice == 'Back':
 						continue
-					if ability.target == 'enemy' or ability.target == 'ally':
-						if ability.target == 'enemy':
+					elif choice.target == 'enemy' or choice.target == 'ally':
+						if choice.target == 'enemy':
 							targets = [enemy]
 						else:
 							targets = [self]
 						target = targets[choose('Choose a target.', targets) - 1]
-						ability.use(self, target)
-						self.current_mana -= ability.cost
-					elif ability.target == 'all_enemy':
+						choice.use(self, target)
+						self.current_mana -= choice.cost
+					elif choice.target == 'all_enemy':
 						pass
-					elif ability.target == 'all_ally':
+					elif choice.target == 'all_ally':
 						pass
-					elif ability.target == 'all':
+					elif choice.target == 'all':
 						pass
 				elif choice == 3:
 					dialogue('You passed.')
@@ -491,35 +456,17 @@ class Area(Location):
 			player.current_health = player.health
 			player.current_mana = player.mana
 		dialogue(f'--- You travel to {self}.')
-		choice = 1
 		while True:
 			choices = self.locations + ('View Character', 'Save') + (('Level up!',) if player.lvl_up_avaliable() else ())
-			while True:
-				print(self)
-				for i, c in enumerate(choices, 1):
-					print(f' {">" if i == choice else "-"} {c}')
-				time.sleep(delay)
-				pressed = keyboard.read_key(True)
-				if pressed == 'up':
-					if choice > 1:
-						choice -= 1
-				elif pressed == 'down':
-					if choice < len(choices):
-						choice += 1
-				elif pressed == 'enter':
-					time.sleep(delay)
-					clear()
-					action = choices[choice - 1]
-					break
-				clear()
-			if action == 'View Character': 
+			choice = choices[choose(self, choices) - 1]
+			if choice == 'View Character': 
 				player.view_stats()
-			elif action == 'Save': 
+			elif choice == 'Save': 
 				player.save()
-			elif action == 'Level up!': 
-				player.lvl_up()
+			elif choice == 'Level up!': 
+				player.lvl_up(abilities)
 			else:
-				action.visit(player)
+				choice.visit(player)
 
 class Shop(Location):
 
@@ -536,74 +483,33 @@ class Shop(Location):
 		dialogue(f'--- You travel to {self}.')
 		dialogue(self.greeting)
 		while True:
-			choice = 1
 			choices = self.stock + ('Sell items', 'Leave')
-			while True:
-				print(f'--- You have {player.gold} gold.')
-				for i, c in enumerate(choices, 1):
-					if type(c) is not str:
-						print(f' {">" if i == choice else "-"} {c} - {c.value} gold')		
-					else:
-						print(f' {">" if i == choice else "-"} {c}')
-				time.sleep(delay)
-				pressed = keyboard.read_key(True)
-				if pressed == 'up':
-					if choice > 1:
-						choice -= 1
-				elif pressed == 'down':
-					if choice < len(choices):
-						choice += 1
-				elif pressed == 'enter':
-					time.sleep(delay)
-					clear()
-					item = choices[choice - 1]
-					if type(item) is not str:
-						if item.value > player.gold:
-							print('--- Insufficient funds')
-							continue
-					break
-				clear()
-			if item == 'Sell items':
+			choice_info = [f'{c} - {c.value} gold' if type(c) != str else c for c in choices]
+			choice = choices[choose(f'--- You have {player.gold} gold.', choice_info) - 1]
+			if type(choice) != str:
+				if choice.value > player.gold:
+					print('--- Insufficient funds')
+					continue
+			if choice == 'Sell items':
 				while True:
-					choice = 1
 					choices = [i for i in player.inventory if not i.quest] + ['Back']
+					choice_info = [f'{c} - {int(c.value * 0.8)} gold' if type(c) != str else c for c in choices]
 					if choices == ['Back']:
 						print('--- Nothing to sell')
 						break
-					while True:
-						print(f'--- You have {player.gold} gold.')
-						for i, c in enumerate(choices, 1):
-							if type(c) is not str:
-								print(f' {">" if i == choice else "-"} {c} - {int(c.value * 0.8)} gold')
-							else:
-								print(f' {">" if i == choice else "-"} {c}')
-						time.sleep(delay)
-						pressed = keyboard.read_key(True)
-						if pressed == 'up':
-							if choice > 1:
-								choice -= 1
-						elif pressed == 'down':
-							if choice < len(choices):
-								choice += 1
-						elif pressed == 'enter':
-							time.sleep(delay)
-							clear()
-							choice = choices[choice - 1]
-							break
-						clear()
+					choice = choices[choose(f'--- You have {player.gold} gold.', choice_info) - 1]
 					if choice == 'Back':
 						break
 					else:
 						player.gold += int(choice.value * 0.8)
 						player.inventory.remove(choice)
 						print(f'--- You sold a {choice} for {int(choice.value * 0.8)} gold.')
-			elif item == 'Leave': 
+			elif choice == 'Leave': 
 				return
 			else:
-				if type(item) is not str:
-					player.gold -= item.value
-					player.inventory.append(item)
-					print(f'--- You bought a {item} for {item.value} gold.')
+				player.gold -= choice.value
+				player.inventory.append(choice)
+				print(f'--- You bought a {choice} for {choice.value} gold.')
 
 class Slime(Character):
 
@@ -913,7 +819,7 @@ def main():
 			player.build_char()
 			if choose('Skip the tutorial?', ('Yes', 'No')) == 1:
 				player.equip(player.class_type.weap)
-				player.lvl_up()
+				player.lvl_up(abilities)
 			else:
 				dialogue(f'Welcome to The Realm of Asathryne, {player}. A kingdom filled with adventure and danger, with much in store for those brave enough to explore it. Of course, nothing a {player.class_type} such as yourself can\'t handle.')
 				dialogue('Oh, of course! Allow me to introduce myself. My name is Kanron, your advisor.')
@@ -937,7 +843,7 @@ def main():
 				dialogue('Kanron: Your level represents how powerful you are, and determines the level of your enemies; when you go up a level, you will recieve 3 skill points to spend on any of the 4 stats, and 1 ability point to learn/upgrade abilities. Additionally, your health and mana will automatically increase and regenerate.')
 				dialogue('Kanron: You can gain XP (experience points) in battle; when you have enough, you\'ll go up one level and get to use your skill points.')
 				dialogue('Kanron: Let\'s upgrade your stats. For your class, you recieve an extra 3 skill points in the stat that your class favors, and you will recieve 1 level up.')
-				player.lvl_up()
+				player.lvl_up(abilities)
 				dialogue('Kanron: Great job! Now that you have learned the basics, it is time you start your journey into the Realm of Asathryne.')
 			sanctuary.visit(player)
 		elif choice == 2:
@@ -950,25 +856,8 @@ def main():
 			if saves == []:
 				print('No saves found')
 				continue
-			choice = 1
-			while True:
-				print('Choose your character.')
-				for i, c in enumerate(saves, 1):
-					print(f' {">" if i == choice else "-"} {c.name} - Level {c.lvl} {c.class_type}')
-				time.sleep(delay)
-				pressed = keyboard.read_key(True)
-				if pressed == 'up':
-					if choice > 1:
-						choice -= 1
-				elif pressed == 'down':
-					if choice < len(saves):
-						choice += 1
-				elif pressed == 'enter':
-					time.sleep(delay)
-					clear()
-					break
-				clear()
-			player = saves[choice - 1] 
+			saves_info = [f'{c.name} - Level {c.lvl} {c.class_type}' for c in saves]
+			player = saves[choose('Choose your character.', saves_info) - 1] 
 			try:
 				if player.version != __version__:
 					dialogue(f'WARNING: This character was created in version {player.version}. Current version is {__version__}. If you continue, unexpected errors may occur.')
