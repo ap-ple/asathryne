@@ -40,8 +40,7 @@ def choose_number(prompt, choices, error = '--- Invalid choice'):
         return choice
 
 #Asks the user to choose from a list; returns the number chosen
-def choose(prompt, choices):
-    choice = 1
+def choose(prompt, choices, choice = 1, ret = False):
     while True:
         print(prompt)
         for i, c in enumerate(choices, 1):
@@ -57,6 +56,8 @@ def choose(prompt, choices):
         elif pressed == 'enter':
             time.sleep(delay)
             clear()
+            if ret:
+                return choices[choice - 1]
             return choice
         clear()
 
