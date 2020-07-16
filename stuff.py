@@ -42,7 +42,6 @@ def choose_number(prompt, choices, error = '--- Invalid choice'):
 #Asks the user to choose from a list; returns the number chosen
 def choose(prompt, choices, choice = 1, ret = False):
     while True:
-        clear()
         print(prompt)
         for i, c in enumerate(choices, 1):
             print(f' {">" if i == choice else "-"} {c}')
@@ -60,6 +59,7 @@ def choose(prompt, choices, choice = 1, ret = False):
             if ret:
                 return choices[choice - 1]
             return choice
+        clear()
 
 #returns a string of the simplest radical form of the square root of a number
 def radical(num):
