@@ -168,22 +168,22 @@ class PlayerCharacter(Character):
 
 		'''Used to equip a weapon'''
 
-		if weapon in self.inventory:
+		weapon_in_inv = weapon in self.inventory
+		if weapon_in_inv:
 			self.inventory.remove(weapon)
 			self.weap = weapon
 			dialogue(f'--- {weapon} has been equipped.')
-			return True
-		return False
+		return weapon_in_inv
 
 	def item_remove(self, item):
 
 		'''Used to remove an item from the player's inventory'''
 
-		if item in self.inventory:
+		item_in_inv = item in self.inventory
+		if item_in_inv:
 			dialogue(f'--- {item} has been removed from your inventory.')
 			self.inventory.remove(item)
-			return True
-		return False
+		return item_in_inv
 
 	def learn_ability(self, abilities):
 
