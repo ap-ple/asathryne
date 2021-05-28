@@ -6,9 +6,10 @@ from getpass import getpass
 
 delay = 0.15
 
-#a shorter version of system('cls')
+#clears the screen
 def clear():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    print('\n' * 1000) #faster, but leaves behind copies and displays text at the bottom of the screen
+    #os.system('cls' if os.name == 'nt' else 'clear') #slower
 
 #Like input, but only accepts numbers; returns number in integer form, or 0 if the input is not a number
 def num_input(string=''):
