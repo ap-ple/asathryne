@@ -775,7 +775,8 @@ class Protection(Ability):
 abilities = [Stun(), Fireball(), SureStrike(), Protection()]
 
 def main():
-	clear()
+	#fixes a stuttering issue
+	print('\n' * 10000)
 	while True:
 		choice = choose(f'>>> Asathryne <<< v{__version__}\n(Use arrow keys and press enter to select)', ('New game', 'Load game', 'Help'), ret = True)
 		if choice == 'New game':
