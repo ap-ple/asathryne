@@ -1,7 +1,6 @@
 import os
 import time
 import keyboard
-from math import prod
 from getpass import getpass
 
 delay = 0.15
@@ -61,24 +60,6 @@ def choose(prompt, choices, choice = 1, ret = False):
                 return choices[choice - 1]
             return choice
         clear()
-
-#returns a string of the simplest radical form of the square root of a number
-def radical(num):
-    numlist = []
-    while True: 
-        for n in range(2, num):
-            if num % (n ** 2) == 0:
-                num /= (n ** 2)
-                numlist.append(n)
-                break
-        else:
-            break
-    coef = prod(numlist)
-    if coef == 1:
-        return f'√{int(num)}'
-    elif num == 1:
-        return coef
-    return f'{coef}√{int(num)}'
 
 if __name__ == '__main__':
     dialogue('This is the stuff module.')
